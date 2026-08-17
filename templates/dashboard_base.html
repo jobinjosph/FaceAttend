@@ -16,10 +16,18 @@
             </form>
         </div>
 
-        <div class="dashboard-placeholder">
-            <strong>{{ dashboard_role }} dashboard</strong>
-            <p>The functional modules for this dashboard will be added in the next phases.</p>
-        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        {% block dashboard_content %}
+            <div class="dashboard-placeholder">
+                <strong>{{ dashboard_role }} dashboard</strong>
+                <p>The functional modules for this dashboard will be added in the next phases.</p>
+            </div>
+        {% endblock %}
     </div>
 </section>
 {% endblock %}

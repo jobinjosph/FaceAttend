@@ -8,6 +8,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 SCHEMA_FILE = BASE_DIR / "database" / "schema.sql"
+MIGRATIONS_DIR = BASE_DIR / "database" / "migrations"
 
 
 def clean_sql(sql_text):
@@ -18,6 +19,42 @@ def clean_sql(sql_text):
             lines.append(line)
 
     return [statement.strip() for statement in "\n".join(lines).split(";") if statement.strip()]
+
+
+def apply_migrations(connection, cursor):
+    """Apply each SQL migration exactly once."""
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            migration_name VARCHAR(255) PRIMARY KEY,
+            applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB
+        """
+    )
+
+    if not MIGRATIONS_DIR.exists():
+        return 0
+
+    applied_count = 0
+    for migration_file in sorted(MIGRATIONS_DIR.glob("*.sql")):
+        cursor.execute(
+            "SELECT 1 FROM schema_migrations WHERE migration_name = %s",
+            (migration_file.name,),
+        )
+        if cursor.fetchone():
+            continue
+
+        for statement in clean_sql(migration_file.read_text(encoding="utf-8")):
+            cursor.execute(statement)
+
+        cursor.execute(
+            "INSERT INTO schema_migrations (migration_name) VALUES (%s)",
+            (migration_file.name,),
+        )
+        connection.commit()
+        applied_count += 1
+
+    return applied_count
 
 
 def main():
@@ -59,11 +96,13 @@ def main():
         cursor.execute(statement)
 
     connection.commit()
+    migration_count = apply_migrations(connection, cursor)
     cursor.close()
     connection.close()
 
     print(f"✓ Database '{database}' is ready.")
     print("✓ FaceAttend tables created successfully.")
+    print(f"✓ Applied {migration_count} new database migration(s).")
 
 
 if __name__ == "__main__":

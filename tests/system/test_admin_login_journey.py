@@ -26,7 +26,7 @@ def test_admin_can_login_view_dashboard_and_logout(client, monkeypatch):
 
     assert login_response.status_code == 200
     assert b"Welcome, FaceAttend Admin" in login_response.data
-    assert b"Admin dashboard" in login_response.data
+    assert b"Manage Students" in login_response.data
 
     logout_response = client.post("/logout", follow_redirects=True)
     assert logout_response.status_code == 200

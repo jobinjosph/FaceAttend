@@ -25,6 +25,9 @@ events for each active period.
 - Password hashing and role-based route protection
 - Admin, faculty and student dashboard foundations
 - Interactive command for creating the first administrator
+- Admin student management: list, add, edit, activate and deactivate
+- Versioned database migrations applied safely by `init_db.py`
+- Twenty-four PG programmes with Semester 1–4 options
 
 Face recognition is intentionally not included yet. It will be introduced only
 after the academic management features are working and tested.
@@ -69,6 +72,21 @@ flask --app app create-admin
 Enter the administrator's name, email and a password containing at least eight
 characters. The password is securely hashed before it is stored. Start the
 application with `python app.py`, then open `/login` to sign in.
+
+## Manage students
+
+Log in as an administrator and choose **Manage Students** from the Admin
+Dashboard. Student register numbers are normalized, course/semester selections
+are validated, and records are deactivated rather than permanently deleted.
+
+Whenever the project receives a new database migration, run:
+
+```bash
+python init_db.py
+```
+
+Applied migrations are recorded in `schema_migrations`, so rerunning the command
+is safe.
 
 ## Manual authentication check
 
@@ -263,7 +281,7 @@ FaceAttend/
 - dashboard shells
 
 ## Phase 3
-- Add/edit/delete students
+- Add/edit/activate/deactivate students (complete)
 - course, semester and subject management
 - timetable
 

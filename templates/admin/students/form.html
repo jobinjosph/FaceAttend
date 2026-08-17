@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% set is_edit = student.get('id') is not none %}
+{% block title %}{{ 'Edit' if is_edit else 'Add' }} Student | FaceAttend{% endblock %}
+
+{% block content %}
+<section class="dashboard-section">
+    <div class="container narrow-container">
+        <div class="page-heading-row">
+            <div>
+                <span class="section-kicker">Admin · Students</span>
+                <h1>{{ 'Edit student' if is_edit else 'Add student' }}</h1>
+                <p>Enter the student's academic profile. Face registration comes later.</p>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="post" class="student-form-card">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="register_number">Register number</label>
+                    <input id="register_number" name="register_number" value="{{ student.get('register_number', '') }}" required>
+                    {% if errors.get('register_number') %}<small class="field-error">{{ errors.register_number }}</small>{% endif %}
+                </div>
+
+                <div class="form-field">
+                    <label for="full_name">Full name</label>
+                    <input id="full_name" name="full_name" value="{{ student.get('full_name', '') }}" required>
+                    {% if errors.get('full_name') %}<small class="field-error">{{ errors.full_name }}</small>{% endif %}
+                </div>
+
+                <div class="form-field full-width">
+                    <label for="email">Email address <span>Optional</span></label>
+                    <input id="email" name="email" type="email" value="{{ student.get('email') or '' }}">
+                    {% if errors.get('email') %}<small class="field-error">{{ errors.email }}</small>{% endif %}
+                </div>
+
+                <div class="form-field">
+                    <label id="course_label">Course</label>
+                    {% set selected_course = namespace(label='Select course') %}
+                    {% for course in courses %}
+                        {% if student.get('course_id')|string == course.id|string %}
+                            {% set selected_course.label = course.code ~ ' — ' ~ course.name %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <div class="course-combobox" data-course-combobox>
+                        <input
+                            id="course_id"
+                            name="course_id"
+                            type="hidden"
+                            value="{{ student.get('course_id', '') }}"
+                        >
+                        <button
+                            class="course-combobox-button"
+                            type="button"
+                            aria-labelledby="course_label course_selected_label"
+                            aria-haspopup="listbox"
+                            aria-expanded="false"
+                            aria-controls="course_options"
+                        >
+                            <span id="course_selected_label">{{ selected_course.label }}</span>
+                            <span aria-hidden="true">⌄</span>
+                        </button>
+
+                        <div class="course-combobox-menu" id="course_options" role="listbox" hidden>
+                            <div class="course-search-wrap">
+                                <input
+                                    class="course-search"
+                                    type="search"
+                                    placeholder="Search programmes..."
+                                    aria-label="Search programmes"
+                                    autocomplete="off"
+                                >
+                            </div>
+                            <div class="course-option-list">
+                                {% for course in courses %}
+                                    <button
+                                        class="course-option"
+                                        type="button"
+                                        role="option"
+                                        data-value="{{ course.id }}"
+                                        data-label="{{ course.code }} — {{ course.name }}"
+                                        aria-selected="{{ 'true' if student.get('course_id')|string == course.id|string else 'false' }}"
+                                    >
+                                        <strong>{{ course.code }}</strong>
+                                        <span>{{ course.name }}</span>
+                                    </button>
+                                {% endfor %}
+                                <p class="course-no-results" hidden>No matching programme found.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% if errors.get('course_id') %}<small class="field-error">{{ errors.course_id }}</small>{% endif %}
+                </div>
+
+                <div class="form-field">
+                    <label for="semester_id">Semester</label>
+                    <select id="semester_id" name="semester_id" required>
+                        <option value="">Select semester</option>
+                        {% for semester in semesters %}
+                            <option
+                                value="{{ semester.id }}"
+                                data-course-id="{{ semester.course_id }}"
+                                {% if student.get('semester_id')|string == semester.id|string %}selected{% endif %}
+                            >
+                                Semester {{ semester.semester_number }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.get('semester_id') %}<small class="field-error">{{ errors.semester_id }}</small>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a class="button cancel-button" href="{{ url_for('admin_students.student_list') }}">Cancel</a>
+                <button class="button primary form-submit" type="submit">
+                    {{ 'Save changes' if is_edit else 'Add student' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
