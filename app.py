@@ -1,6 +1,10 @@
 from flask import Flask
 from config import Config
+from extensions import csrf
+from routes.auth import auth_bp
+from routes.dashboard import dashboard_bp
 from routes.main import main_bp
+from services.auth_service import register_auth_commands
 
 
 def create_app(test_config=None):
@@ -11,7 +15,11 @@ def create_app(test_config=None):
     if test_config is not None:
         app.config.update(test_config)
 
+    csrf.init_app(app)
     app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(dashboard_bp)
+    register_auth_commands(app)
 
     return app
 

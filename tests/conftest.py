@@ -12,6 +12,7 @@ def app():
             "DEBUG": False,
             "SECRET_KEY": "test-secret-key",
             "DB_NAME": "faceattend_test",
+            "WTF_CSRF_ENABLED": False,
         }
     )
 

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="dashboard-section">
+    <div class="container">
+        <div class="dashboard-welcome">
+            <div>
+                <span class="section-kicker">{{ dashboard_role }} portal</span>
+                <h1>Welcome, {{ session.full_name }}</h1>
+                <p>{{ dashboard_message }}</p>
+            </div>
+
+            <form method="post" action="{{ url_for('auth.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="button dashboard-logout" type="submit">Log out</button>
+            </form>
+        </div>
+
+        <div class="dashboard-placeholder">
+            <strong>{{ dashboard_role }} dashboard</strong>
+            <p>The functional modules for this dashboard will be added in the next phases.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

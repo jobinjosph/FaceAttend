@@ -21,9 +21,13 @@ events for each active period.
   - final attendance records
 - Automated unit, component, integration and system tests
 - GitHub Actions continuous testing on pushes and pull requests
+- Secure email/password login with CSRF protection
+- Password hashing and role-based route protection
+- Admin, faculty and student dashboard foundations
+- Interactive command for creating the first administrator
 
-Authentication and face recognition are intentionally **not** included in
-Phase 1. They are the next development phases.
+Face recognition is intentionally not included yet. It will be introduced only
+after the academic management features are working and tested.
 
 ---
 
@@ -50,6 +54,31 @@ pytest --cov=. --cov-report=term-missing
 The automated database-health tests use a mock and do not modify the local
 `faceattend` database. GitHub Actions runs the same test suite after every push
 to `main` and for every pull request targeting `main`.
+
+---
+
+# Create the first administrator
+
+After the database has been initialized, activate the virtual environment and
+run:
+
+```bash
+flask --app app create-admin
+```
+
+Enter the administrator's name, email and a password containing at least eight
+characters. The password is securely hashed before it is stored. Start the
+application with `python app.py`, then open `/login` to sign in.
+
+## Manual authentication check
+
+After automated tests pass, verify this short browser journey:
+
+1. Open `/login` and confirm an incorrect password is rejected.
+2. Log in with the administrator account and confirm the Admin Dashboard opens.
+3. Confirm `/dashboard/faculty` and `/dashboard/student` return forbidden access.
+4. Log out and use the browser Back button.
+5. Confirm `/dashboard/admin` redirects back to `/login` after logout.
 
 ---
 
