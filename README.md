@@ -19,9 +19,37 @@ events for each active period.
   - attendance sessions
   - entry/exit events
   - final attendance records
+- Automated unit, component, integration and system tests
+- GitHub Actions continuous testing on pushes and pull requests
 
 Authentication and face recognition are intentionally **not** included in
 Phase 1. They are the next development phases.
+
+---
+
+# Run the tests
+
+Install the development dependencies inside the virtual environment:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Run every automated test:
+
+```bash
+pytest
+```
+
+Run the tests with a coverage report:
+
+```bash
+pytest --cov=. --cov-report=term-missing
+```
+
+The automated database-health tests use a mock and do not modify the local
+`faceattend` database. GitHub Actions runs the same test suite after every push
+to `main` and for every pull request targeting `main`.
 
 ---
 

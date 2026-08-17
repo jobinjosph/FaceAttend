@@ -7,3 +7,5 @@ __pycache__/
 .vscode/
 coverage.xml
 htmlcov/
+.pytest_cache/
+.coverage

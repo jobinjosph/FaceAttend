@@ -3,10 +3,13 @@ from config import Config
 from routes.main import main_bp
 
 
-def create_app():
+def create_app(test_config=None):
     """Application factory for FaceAttend."""
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    if test_config is not None:
+        app.config.update(test_config)
 
     app.register_blueprint(main_bp)
 
