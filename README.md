@@ -28,6 +28,7 @@ events for each active period.
 - Admin student management: list, add, edit, activate and deactivate
 - Versioned database migrations applied safely by `init_db.py`
 - Twenty-four PG programmes with Semester 1–4 options
+- Admin faculty management with linked secure Faculty Portal accounts
 
 Face recognition is intentionally not included yet. It will be introduced only
 after the academic management features are working and tested.
@@ -87,6 +88,15 @@ python init_db.py
 
 Applied migrations are recorded in `schema_migrations`, so rerunning the command
 is safe.
+
+## Manage faculty
+
+Log in as an administrator and choose **Manage Faculty**. Adding a faculty
+member creates both the faculty profile and a linked `FACULTY` login account in
+one database transaction. Editing the profile keeps both records synchronized.
+Entering a new password while editing securely resets it; leaving it blank keeps
+the current password. Activating or deactivating faculty also controls access to
+the Faculty Portal.
 
 ## Manual authentication check
 

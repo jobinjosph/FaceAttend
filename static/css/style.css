@@ -1387,6 +1387,11 @@ a {
     font-size: .75rem;
 }
 
+.field-help {
+    color: var(--ink-500);
+    font-size: .75rem;
+}
+
 .form-actions {
     display: flex;
     justify-content: flex-end;
