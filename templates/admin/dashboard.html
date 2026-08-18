@@ -42,5 +42,14 @@
         </div>
         <span class="arrow">→</span>
     </a>
+
+    <a class="dashboard-module" href="{{ url_for('admin_timetable.timetable_list') }}">
+        <span class="dashboard-module-icon">TT</span>
+        <div><strong>Manage Timetable</strong><p>Schedule MCA Semester 3 periods from Monday to Saturday.</p></div>
+        <span class="arrow">→</span>
+    </a>
+    <a class="dashboard-module" href="{{ url_for('admin_sessions.session_list') }}">
+        <span class="dashboard-module-icon">SE</span><div><strong>Attendance Sessions</strong><p>Generate dated class sessions from the weekly timetable.</p></div><span class="arrow">→</span>
+    </a>
 </div>
 {% endblock %}

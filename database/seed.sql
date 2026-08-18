@@ -26,8 +26,10 @@ VALUES
 ('CCP432', 'Cloud Computing Practical', @semester_id, 'PRACTICAL', TRUE),
 ('DA433', 'Digital Analytics', @semester_id, 'THEORY', TRUE),
 ('ECP434', 'Enterprise Computing Project', @semester_id, 'PROJECT', TRUE),
-('IPP435', 'Internship Project Presentation', @semester_id, 'PROJECT', TRUE),
-('MAD432', 'Mobile Application Development', @semester_id, 'THEORY', TRUE)
+('MAD432', 'Mobile Application Development', @semester_id, 'THEORY', TRUE),
+('MADP433', 'Mobile Application Development Practical', @semester_id, 'PRACTICAL', TRUE),
+('RM331', 'Research Methodology', @semester_id, 'THEORY', TRUE),
+('VSM434', 'Ventureship and Startup Management', @semester_id, 'THEORY', TRUE)
 ON DUPLICATE KEY UPDATE
 subject_name = VALUES(subject_name),
 semester_id = VALUES(semester_id),
@@ -37,4 +39,6 @@ is_active = TRUE;
 UPDATE subjects
 SET is_active = FALSE
 WHERE semester_id = @semester_id
-  AND subject_code NOT IN ('CC431', 'CCP432', 'DA433', 'ECP434', 'IPP435', 'MAD432');
+  AND subject_code NOT IN (
+    'CC431', 'CCP432', 'DA433', 'ECP434', 'MAD432', 'MADP433', 'RM331', 'VSM434'
+  );

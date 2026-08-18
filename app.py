@@ -5,6 +5,9 @@ from extensions import csrf
 from routes.admin_faculty import admin_faculty_bp
 from routes.admin_assignments import admin_assignments_bp
 from routes.admin_subjects import admin_subjects_bp
+from routes.admin_timetable import admin_timetable_bp
+from routes.admin_sessions import admin_sessions_bp
+from routes.faculty_sessions import faculty_sessions_bp
 from routes.admin_students import admin_students_bp
 from routes.auth import auth_bp
 from routes.dashboard import dashboard_bp
@@ -28,6 +31,9 @@ def create_app(test_config=None):
     app.register_blueprint(admin_faculty_bp)
     app.register_blueprint(admin_assignments_bp)
     app.register_blueprint(admin_subjects_bp)
+    app.register_blueprint(admin_timetable_bp)
+    app.register_blueprint(admin_sessions_bp)
+    app.register_blueprint(faculty_sessions_bp)
     register_auth_commands(app)
 
     @app.errorhandler(mysql.connector.Error)

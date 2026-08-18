@@ -4,3 +4,8 @@
 {% set dashboard_message = "Manage classes and period-based attendance sessions." %}
 
 {% block title %}Faculty Dashboard | FaceAttend{% endblock %}
+
+{% block dashboard_content %}
+<h2 class="dashboard-section-title">Faculty dashboard</h2>
+<div class="dashboard-grid"><a class="dashboard-module" href="{{ url_for('faculty_sessions.session_list') }}"><span class="dashboard-module-icon">SE</span><div><strong>My Sessions</strong><p>Start, end, review and confirm your scheduled classes.</p></div><span class="arrow">→</span></a></div>
+{% endblock %}
