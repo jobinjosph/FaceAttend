@@ -33,3 +33,8 @@ subject_name = VALUES(subject_name),
 semester_id = VALUES(semester_id),
 activity_type = VALUES(activity_type),
 is_active = TRUE;
+
+UPDATE subjects
+SET is_active = FALSE
+WHERE semester_id = @semester_id
+  AND subject_code NOT IN ('CC431', 'CCP432', 'DA433', 'ECP434', 'IPP435', 'MAD432');
