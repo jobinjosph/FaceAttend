@@ -1382,6 +1382,29 @@ a {
     outline: 3px solid rgba(41, 121, 255, .12);
 }
 
+.list-filter-form {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(150px, 220px) auto;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.list-filter-form input,
+.list-filter-form select {
+    min-height: 48px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: #fff;
+    padding: 0 1rem;
+    font: inherit;
+}
+
+@media (max-width: 700px) {
+    .list-filter-form {
+        grid-template-columns: 1fr;
+    }
+}
+
 .field-error {
     color: #a52535;
     font-size: .75rem;

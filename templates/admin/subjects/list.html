@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Semester 3 Subjects | FaceAttend{% endblock %}
+{% block content %}
+<section class="dashboard-section"><div class="container">
+    <div class="page-heading-row">
+        <div><span class="section-kicker">Admin · Academic setup</span><h1>MCA Semester 3 subjects</h1><p>Manage the subjects included in the first attendance workflow.</p></div>
+        <a class="button primary" href="{{ url_for('admin_subjects.add_subject') }}">Add subject</a>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert alert-{{ category }}" role="alert">{{ message }}</div>{% endfor %}{% endwith %}
+    <form class="list-filter-form" method="get">
+        <input name="search" value="{{ search }}" placeholder="Search code or subject name" aria-label="Search subjects">
+        <select name="status" aria-label="Filter by status">
+            <option value="all" {{ 'selected' if status_filter == 'all' }}>All statuses</option>
+            <option value="active" {{ 'selected' if status_filter == 'active' }}>Active</option>
+            <option value="inactive" {{ 'selected' if status_filter == 'inactive' }}>Inactive</option>
+        </select>
+        <button class="button" type="submit">Filter</button>
+    </form>
+    <div class="table-card">
+    {% if subjects %}<div class="table-scroll"><table class="data-table"><thead><tr><th>Code</th><th>Subject</th><th>Type</th><th>Semester</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+    {% for subject in subjects %}<tr>
+        <td><strong>{{ subject.subject_code }}</strong></td><td>{{ subject.subject_name }}</td><td>{{ subject.activity_type|title }}</td><td>MCA Semester {{ subject.semester_number }}</td>
+        <td><span class="status-badge {{ 'active' if subject.is_active else 'inactive' }}">{{ 'Active' if subject.is_active else 'Inactive' }}</span></td>
+        <td class="table-actions"><a href="{{ url_for('admin_subjects.edit_subject', subject_id=subject.id) }}">Edit</a><form method="post" action="{{ url_for('admin_subjects.change_subject_status', subject_id=subject.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="is_active" value="{{ 0 if subject.is_active else 1 }}"><button type="submit">{{ 'Deactivate' if subject.is_active else 'Activate' }}</button></form></td>
+    </tr>{% endfor %}</tbody></table></div>
+    {% else %}<div class="empty-state"><strong>No matching Semester 3 subjects</strong><p>Add a subject or change the filters.</p><a href="{{ url_for('admin_subjects.add_subject') }}">Add subject →</a></div>{% endif %}
+    </div><a class="text-link" href="{{ url_for('dashboard.admin_dashboard') }}">← Back to Admin Dashboard</a>
+</div></section>
+{% endblock %}

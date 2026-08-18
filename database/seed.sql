@@ -19,9 +19,17 @@ SET @semester_id = (
     LIMIT 1
 );
 
-INSERT IGNORE INTO subjects
-(subject_code, subject_name, semester_id, activity_type)
+INSERT INTO subjects
+(subject_code, subject_name, semester_id, activity_type, is_active)
 VALUES
-('CC431', 'Cloud Computing', @semester_id, 'LECTURE'),
-('RM331', 'Research Methodology', @semester_id, 'LECTURE'),
-('MAD432', 'Mobile Application Development', @semester_id, 'LECTURE');
+('CC431', 'Cloud Computing', @semester_id, 'THEORY', TRUE),
+('CCP432', 'Cloud Computing Practical', @semester_id, 'PRACTICAL', TRUE),
+('DA433', 'Digital Analytics', @semester_id, 'THEORY', TRUE),
+('ECP434', 'Enterprise Computing Project', @semester_id, 'PROJECT', TRUE),
+('IPP435', 'Internship Project Presentation', @semester_id, 'PROJECT', TRUE),
+('MAD432', 'Mobile Application Development', @semester_id, 'THEORY', TRUE)
+ON DUPLICATE KEY UPDATE
+subject_name = VALUES(subject_name),
+semester_id = VALUES(semester_id),
+activity_type = VALUES(activity_type),
+is_active = TRUE;

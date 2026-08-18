@@ -3,6 +3,7 @@ import mysql.connector
 from config import Config
 from extensions import csrf
 from routes.admin_faculty import admin_faculty_bp
+from routes.admin_subjects import admin_subjects_bp
 from routes.admin_students import admin_students_bp
 from routes.auth import auth_bp
 from routes.dashboard import dashboard_bp
@@ -24,6 +25,7 @@ def create_app(test_config=None):
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(admin_students_bp)
     app.register_blueprint(admin_faculty_bp)
+    app.register_blueprint(admin_subjects_bp)
     register_auth_commands(app)
 
     @app.errorhandler(mysql.connector.Error)

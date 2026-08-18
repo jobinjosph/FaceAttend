@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% set is_edit = subject.get('id') is not none %}
+{% block title %}{{ 'Edit' if is_edit else 'Add' }} Subject | FaceAttend{% endblock %}
+{% block content %}
+<section class="dashboard-section"><div class="container narrow-container">
+    <div class="page-heading-row"><div><span class="section-kicker">Admin · MCA Semester 3</span><h1>{{ 'Edit subject' if is_edit else 'Add subject' }}</h1><p>This subject will be available when the Semester 3 timetable is created.</p></div></div>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert alert-{{ category }}" role="alert">{{ message }}</div>{% endfor %}{% endwith %}
+    <form method="post" class="student-form-card"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-grid">
+            <div class="form-field"><label for="subject_code">Subject code</label><input id="subject_code" name="subject_code" value="{{ subject.get('subject_code', '') }}" required>{% if errors.get('subject_code') %}<small class="field-error">{{ errors.subject_code }}</small>{% endif %}</div>
+            <div class="form-field"><label for="activity_type">Activity type</label><select id="activity_type" name="activity_type" required>{% for type in activity_types %}<option value="{{ type }}" {{ 'selected' if subject.get('activity_type', 'LECTURE') == type }}>{{ type|title }}</option>{% endfor %}</select>{% if errors.get('activity_type') %}<small class="field-error">{{ errors.activity_type }}</small>{% endif %}</div>
+            <div class="form-field full-width"><label for="subject_name">Subject name</label><input id="subject_name" name="subject_name" value="{{ subject.get('subject_name', '') }}" required>{% if errors.get('subject_name') %}<small class="field-error">{{ errors.subject_name }}</small>{% endif %}</div>
+            <div class="form-field full-width"><label>Programme and semester</label><input value="MCA — Semester 3" disabled><small class="field-help">The first version is intentionally limited to MCA Semester 3.</small></div>
+        </div>
+        <div class="form-actions"><a class="button cancel-button" href="{{ url_for('admin_subjects.subject_list') }}">Cancel</a><button class="button primary form-submit" type="submit">{{ 'Save changes' if is_edit else 'Add subject' }}</button></div>
+    </form>
+</div></section>
+{% endblock %}
