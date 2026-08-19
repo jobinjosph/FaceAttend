@@ -47,14 +47,38 @@ def test_excessive_image_dimensions_are_rejected(monkeypatch):
         face_service._decode_image("data:image/jpeg;base64,YQ==")
 
 
+def detected_face(x=25, y=25, width=150, height=150):
+    return [x, y, width, height, 55, 70, 145, 70, 100, 105, 68, 145, 132, 145, 0.99]
+
+
 class Detector:
-    def __init__(self, faces): self.faces = faces
-    def detectMultiScale(self, *args, **kwargs): return np.array(self.faces)
+    def __init__(self, faces):
+        self.faces = None if faces is None else np.array(faces, dtype=np.float32)
+        self.input_size = None
+
+    def setInputSize(self, input_size):
+        self.input_size = input_size
+
+    def detect(self, image):
+        return 1, self.faces
+
+
+class Recognizer:
+    def __init__(self, descriptor=None):
+        self.descriptor = np.array(
+            descriptor if descriptor is not None else np.arange(1, 129), dtype=np.float32
+        ).reshape(1, -1)
+
+    def alignCrop(self, image, face):
+        return image
+
+    def feature(self, aligned):
+        return self.descriptor
 
 
 @pytest.mark.unit
 def test_sample_without_face_is_rejected(monkeypatch):
-    monkeypatch.setattr(face_service.cv2, "CascadeClassifier", lambda path: Detector([]))
+    monkeypatch.setattr(face_service, "_load_models", lambda: (Detector(None), Recognizer()))
     monkeypatch.setattr(face_service, "_decode_image", lambda sample: np.zeros((200, 200, 3), dtype=np.uint8))
     with pytest.raises(face_service.FaceSampleError, match="No face"):
         face_service.create_embedding(["a", "b", "c"])
@@ -62,7 +86,7 @@ def test_sample_without_face_is_rejected(monkeypatch):
 
 @pytest.mark.unit
 def test_sample_with_multiple_faces_is_rejected(monkeypatch):
-    monkeypatch.setattr(face_service.cv2, "CascadeClassifier", lambda path: Detector([(0,0,100,100),(100,0,100,100)]))
+    monkeypatch.setattr(face_service, "_load_models", lambda: (Detector([detected_face(), detected_face(50, 20)]), Recognizer()))
     monkeypatch.setattr(face_service, "_decode_image", lambda sample: np.zeros((220, 220, 3), dtype=np.uint8))
     with pytest.raises(face_service.FaceSampleError, match="Only one"):
         face_service.create_embedding(["a", "b", "c"])
@@ -70,20 +94,54 @@ def test_sample_with_multiple_faces_is_rejected(monkeypatch):
 
 @pytest.mark.unit
 def test_blurry_face_sample_is_rejected(monkeypatch):
-    monkeypatch.setattr(face_service.cv2, "CascadeClassifier", lambda path: Detector([(25, 25, 150, 150)]))
+    monkeypatch.setattr(face_service, "_load_models", lambda: (Detector([detected_face()]), Recognizer()))
     monkeypatch.setattr(face_service, "_decode_image", lambda sample: np.zeros((200, 200, 3), dtype=np.uint8))
     with pytest.raises(face_service.FaceSampleError, match="blurry"):
         face_service.create_embedding(["a", "b", "c"])
 
 
 @pytest.mark.unit
-def test_clear_single_face_produces_normalized_descriptor(monkeypatch):
+def test_clear_single_face_produces_normalized_sface_descriptor(monkeypatch):
     image=np.random.default_rng(4).integers(0,256,(200,200,3),dtype=np.uint8)
-    monkeypatch.setattr(face_service.cv2, "CascadeClassifier", lambda path: Detector([(25,25,150,150)]))
+    detector = Detector([detected_face()])
+    monkeypatch.setattr(face_service, "_load_models", lambda: (detector, Recognizer()))
     monkeypatch.setattr(face_service, "_decode_image", lambda sample: image)
     descriptor=face_service.create_embedding(["a","b","c"])
-    assert len(descriptor)==256
+    assert len(descriptor)==128
     assert np.linalg.norm(descriptor)==pytest.approx(1.0,abs=1e-5)
+    assert detector.input_size == (200, 200)
+
+
+@pytest.mark.unit
+def test_face_must_be_large_enough(monkeypatch):
+    image=np.random.default_rng(4).integers(0,256,(200,200,3),dtype=np.uint8)
+    monkeypatch.setattr(face_service, "_load_models", lambda: (Detector([detected_face(width=60, height=60)]), Recognizer()))
+    monkeypatch.setattr(face_service, "_decode_image", lambda sample: image)
+    with pytest.raises(face_service.FaceSampleError, match="Move closer"):
+        face_service.create_embedding(["a", "b", "c"])
+
+
+@pytest.mark.unit
+def test_missing_model_file_has_controlled_error(monkeypatch, tmp_path):
+    monkeypatch.setattr(face_service, "YUNET_MODEL_PATH", tmp_path / "missing-yunet.onnx")
+    monkeypatch.setattr(face_service, "SFACE_MODEL_PATH", tmp_path / "missing-sface.onnx")
+    with pytest.raises(face_service.FaceSampleError, match="models are unavailable"):
+        face_service._load_models()
+
+
+@pytest.mark.unit
+def test_cosine_similarity_and_match_threshold():
+    first = [1.0, 0.0, 0.0]
+    assert face_service.cosine_similarity(first, first) == pytest.approx(1.0)
+    assert face_service.is_match(first, [0.5, 0.5, 0.0], threshold=0.7)
+    assert not face_service.is_match(first, [0.0, 1.0, 0.0], threshold=0.7)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("first,second", [([], []), ([1, 2], [1]), ([0, 0], [0, 0])])
+def test_invalid_embeddings_cannot_be_compared(first, second):
+    with pytest.raises(ValueError):
+        face_service.cosine_similarity(first, second)
 
 
 class FakeCursor:

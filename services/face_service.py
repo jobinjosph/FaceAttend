@@ -1,6 +1,7 @@
 import base64
 import json
 from binascii import Error as Base64Error
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -8,11 +9,16 @@ import numpy as np
 from db import get_db_connection
 
 
-MODEL_NAME = "opencv-haar-hist-v1"
+MODEL_NAME = "opencv-yunet-sface-v1"
+MODEL_DIR = Path(__file__).resolve().parent.parent / "models" / "face"
+YUNET_MODEL_PATH = MODEL_DIR / "face_detection_yunet_2023mar.onnx"
+SFACE_MODEL_PATH = MODEL_DIR / "face_recognition_sface_2021dec.onnx"
 REQUIRED_SAMPLES = 3
 MAX_IMAGE_BYTES = 2 * 1024 * 1024
 MIN_FACE_SIZE = 80
 MIN_BLUR_SCORE = 35.0
+DETECTION_SCORE_THRESHOLD = 0.9
+COSINE_MATCH_THRESHOLD = 0.363
 
 
 class FaceSampleError(ValueError):
@@ -31,35 +37,78 @@ def parse_samples(value):
     return samples
 
 
+def parse_probe(value):
+    if not isinstance(value, str) or not value:
+        raise FaceSampleError("Capture one face sample before recognition.")
+    return value
+
+
 def create_embedding(samples):
-    detector = cv2.CascadeClassifier(
-        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-    )
+    detector, recognizer = _load_models()
     descriptors = []
     for sample in samples:
         image = _decode_image(sample)
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        faces = detector.detectMultiScale(
-            gray, scaleFactor=1.1, minNeighbors=6, minSize=(MIN_FACE_SIZE, MIN_FACE_SIZE)
-        )
-        if len(faces) == 0:
+        height, width = image.shape[:2]
+        detector.setInputSize((width, height))
+        _, faces = detector.detect(image)
+        if faces is None or len(faces) == 0:
             raise FaceSampleError("No face was detected. Face the camera and try again.")
         if len(faces) != 1:
             raise FaceSampleError("Only one person may appear in each sample.")
-        x, y, width, height = faces[0]
-        face = gray[y : y + height, x : x + width]
-        if cv2.Laplacian(face, cv2.CV_64F).var() < MIN_BLUR_SCORE:
+        face = np.asarray(faces[0], dtype=np.float32)
+        x, y, face_width, face_height = face[:4].astype(int)
+        if face_width < MIN_FACE_SIZE or face_height < MIN_FACE_SIZE:
+            raise FaceSampleError("Move closer so the face fills the camera guide.")
+        x, y = max(0, x), max(0, y)
+        crop = image[y : min(height, y + face_height), x : min(width, x + face_width)]
+        if crop.size == 0:
+            raise FaceSampleError("The detected face could not be processed.")
+        gray_crop = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+        if cv2.Laplacian(gray_crop, cv2.CV_64F).var() < MIN_BLUR_SCORE:
             raise FaceSampleError("A captured sample is blurry. Hold still and try again.")
-        normalized = cv2.resize(face, (128, 128))
-        normalized = cv2.equalizeHist(normalized)
-        histogram = cv2.calcHist([normalized], [0], None, [256], [0, 256]).flatten()
-        norm = np.linalg.norm(histogram)
+        aligned = recognizer.alignCrop(image, face)
+        descriptor = np.asarray(recognizer.feature(aligned), dtype=np.float32).flatten()
+        norm = np.linalg.norm(descriptor)
         if norm == 0:
             raise FaceSampleError("The face sample could not be processed.")
-        descriptors.append(histogram / norm)
+        descriptors.append(descriptor / norm)
     averaged = np.mean(descriptors, axis=0)
-    averaged /= np.linalg.norm(averaged)
+    norm = np.linalg.norm(averaged)
+    if norm == 0:
+        raise FaceSampleError("The face samples could not be combined.")
+    averaged /= norm
     return [round(float(value), 8) for value in averaged]
+
+
+def _load_models():
+    missing = [path.name for path in (YUNET_MODEL_PATH, SFACE_MODEL_PATH) if not path.is_file()]
+    if missing:
+        raise FaceSampleError(
+            "Face recognition models are unavailable. Missing: " + ", ".join(missing)
+        )
+    try:
+        detector = cv2.FaceDetectorYN.create(
+            str(YUNET_MODEL_PATH), "", (320, 320), DETECTION_SCORE_THRESHOLD, 0.3, 5000
+        )
+        recognizer = cv2.FaceRecognizerSF.create(str(SFACE_MODEL_PATH), "")
+    except cv2.error as exc:
+        raise FaceSampleError("Face recognition models could not be loaded.") from exc
+    return detector, recognizer
+
+
+def cosine_similarity(first, second):
+    first_vector = np.asarray(first, dtype=np.float32).flatten()
+    second_vector = np.asarray(second, dtype=np.float32).flatten()
+    if first_vector.shape != second_vector.shape or first_vector.size == 0:
+        raise ValueError("Face embeddings must have the same non-empty shape.")
+    denominator = np.linalg.norm(first_vector) * np.linalg.norm(second_vector)
+    if denominator == 0:
+        raise ValueError("Face embeddings cannot be zero vectors.")
+    return float(np.dot(first_vector, second_vector) / denominator)
+
+
+def is_match(first, second, threshold=COSINE_MATCH_THRESHOLD):
+    return cosine_similarity(first, second) >= threshold
 
 
 def _decode_image(data_url):

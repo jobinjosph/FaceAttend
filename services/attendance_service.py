@@ -1,8 +1,12 @@
+import json
+
 from db import get_db_connection
+from services import face_service
 
 
 MANUAL_STATUSES = ("PRESENT", "ABSENT", "LATE", "LEFT_EARLY", "NOT_MARKED")
 EDITABLE_SESSION_STATUSES = ("ACTIVE", "REVIEW")
+FACE_MATCH_AMBIGUITY_MARGIN = 0.05
 
 
 def normalize_attendance_data(form_data):
@@ -167,6 +171,98 @@ def update_records_bulk(session_id, user_id, records):
         raise
     finally:
         cursor.close(); connection.close()
+
+
+def recognize_and_mark(session_id, user_id, probe_embedding):
+    """Match one probe against the session roster and atomically mark entry."""
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            """SELECT ats.status FROM attendance_sessions ats
+               JOIN faculty f ON f.id=ats.faculty_id
+               WHERE ats.id=%s AND f.user_id=%s FOR UPDATE""",
+            (session_id, user_id),
+        )
+        active_session = cursor.fetchone()
+        if active_session is None:
+            connection.rollback()
+            return {"result": "not_found"}
+        if active_session["status"] != "ACTIVE":
+            connection.rollback()
+            return {"result": "locked"}
+
+        cursor.execute(
+            """SELECT ar.student_id, ar.status, ar.first_entry,
+                      st.register_number, st.full_name, fe.embedding_data
+               FROM attendance_records ar
+               JOIN students st ON st.id=ar.student_id AND st.is_active=TRUE
+               JOIN face_embeddings fe ON fe.student_id=st.id AND fe.model_name=%s
+               WHERE ar.session_id=%s
+               FOR UPDATE""",
+            (face_service.MODEL_NAME, session_id),
+        )
+        candidates = cursor.fetchall()
+        if not candidates:
+            connection.rollback()
+            return {"result": "no_registered"}
+
+        ranked = [
+            (
+                face_service.cosine_similarity(
+                    probe_embedding,
+                    _deserialize_embedding(candidate["embedding_data"]),
+                ),
+                candidate,
+            )
+            for candidate in candidates
+        ]
+        ranked.sort(key=lambda item: item[0])
+        best_score, matched = ranked[-1]
+        if best_score < face_service.COSINE_MATCH_THRESHOLD:
+            connection.rollback()
+            return {"result": "unknown", "score": round(best_score, 5)}
+        if len(ranked) > 1 and best_score - ranked[-2][0] < FACE_MATCH_AMBIGUITY_MARGIN:
+            connection.rollback()
+            return {"result": "ambiguous", "score": round(best_score, 5)}
+
+        student = {
+            "id": matched["student_id"],
+            "register_number": matched["register_number"],
+            "full_name": matched["full_name"],
+        }
+        if matched["first_entry"] is not None or matched["status"] in ("PRESENT", "LATE"):
+            connection.rollback()
+            return {"result": "duplicate", "student": student, "score": round(best_score, 5)}
+
+        cursor.execute(
+            """UPDATE attendance_records
+               SET status='PRESENT', first_entry=NOW(), marking_method='FACE',
+                   teacher_override=FALSE, notes=NULL
+               WHERE session_id=%s AND student_id=%s""",
+            (session_id, matched["student_id"]),
+        )
+        cursor.execute(
+            """INSERT INTO attendance_events
+               (session_id, student_id, event_type, event_time, similarity_score, source)
+               VALUES (%s,%s,'ENTRY',NOW(),%s,'FACE')""",
+            (session_id, matched["student_id"], round(best_score, 5)),
+        )
+        connection.commit()
+        return {"result": "matched", "student": student, "score": round(best_score, 5)}
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close(); connection.close()
+
+
+def _deserialize_embedding(value):
+    if isinstance(value, str):
+        value = json.loads(value)
+    if not isinstance(value, list):
+        raise ValueError("Stored face embedding is invalid.")
+    return value
 
 
 def _fetch_all(query, params=()):

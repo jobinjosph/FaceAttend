@@ -1470,11 +1470,19 @@ a {
 .face-capture-card { padding: 24px; border: 1px solid var(--line); border-radius: 18px; background: white; }
 .camera-frame { position: relative; overflow: hidden; aspect-ratio: 4/3; border-radius: 15px; background: var(--navy-950); }
 .camera-frame video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-.camera-frame #camera-message { position: absolute; left: 14px; right: 14px; bottom: 12px; margin: 0; padding: 9px 12px; border-radius: 9px; background: rgba(4,20,35,.78); color: white; text-align: center; font-size: .78rem; }
+.camera-frame #camera-message,
+.camera-frame #attendance-camera-message { position: absolute; left: 14px; right: 14px; bottom: 12px; margin: 0; padding: 9px 12px; border-radius: 9px; background: rgba(4,20,35,.78); color: white; text-align: center; font-size: .78rem; }
 .camera-guide { position: absolute; top: 12%; bottom: 18%; left: 27%; right: 27%; border: 3px solid #52d7e8; border-radius: 46%; box-shadow: 0 0 0 999px rgba(4,20,35,.24); }
 .face-sample-preview { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
 .face-sample-preview img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 10px; transform: scaleX(-1); }
 .face-capture-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.face-attendance-launch { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; padding: 18px; border: 1px solid #b8d3ff; border-radius: 14px; background: #eef5ff; }
+.face-attendance-launch p { margin: 4px 0 0; color: var(--ink-500); }
+.recognition-result { display: grid; gap: 4px; margin-top: 16px; padding: 16px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-soft); }
+.recognition-result span { color: var(--ink-500); }
+.recognition-result.success { border-color: #9eddbb; background: #edfbf3; }
+.recognition-result.warning { border-color: #f0cf83; background: #fff8e7; }
+.recognition-result.error { border-color: #efb0b0; background: #fff1f1; }
 
 @media (max-width: 800px) {
     .weekly-timetable { grid-template-columns: 1fr; }

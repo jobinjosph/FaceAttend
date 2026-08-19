@@ -1,7 +1,7 @@
-from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, session, url_for
 
 from decorators.auth import role_required
-from services import attendance_service
+from services import attendance_service, face_service
 
 
 faculty_attendance_bp = Blueprint("faculty_attendance", __name__, url_prefix="/faculty/sessions")
@@ -20,6 +20,42 @@ def roster(session_id):
         totals=totals, statuses=attendance_service.MANUAL_STATUSES,
         editable=details["status"] in attendance_service.EDITABLE_SESSION_STATUSES,
     )
+
+
+@faculty_attendance_bp.get("/<int:session_id>/attendance/face")
+@role_required("FACULTY")
+def face_attendance(session_id):
+    details = attendance_service.get_session_details(session_id, session["user_id"])
+    if details is None:
+        abort(404)
+    if details["status"] != "ACTIVE":
+        flash("Face attendance is available only while the session is active.", "error")
+        return redirect(url_for("faculty_attendance.roster", session_id=session_id))
+    return render_template("faculty/attendance/face.html", details=details)
+
+
+@faculty_attendance_bp.post("/<int:session_id>/attendance/face/recognize")
+@role_required("FACULTY")
+def recognize_face(session_id):
+    try:
+        sample = face_service.parse_probe(request.form.get("sample"))
+        probe = face_service.create_embedding([sample])
+        result = attendance_service.recognize_and_mark(
+            session_id, session["user_id"], probe
+        )
+    except face_service.FaceSampleError as exc:
+        return jsonify(result="invalid_sample", message=str(exc)), 400
+
+    response_codes = {
+        "matched": 200,
+        "duplicate": 200,
+        "unknown": 404,
+        "ambiguous": 409,
+        "no_registered": 409,
+        "locked": 409,
+        "not_found": 404,
+    }
+    return jsonify(result), response_codes[result["result"]]
 
 
 @faculty_attendance_bp.post("/<int:session_id>/attendance/<int:student_id>")

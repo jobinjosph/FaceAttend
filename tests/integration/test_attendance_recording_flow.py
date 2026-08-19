@@ -40,3 +40,34 @@ def test_bulk_save_reports_changed_roster(client,monkeypatch):
     monkeypatch.setattr("services.attendance_service.attendance_totals",lambda sid:{"PRESENT":0,"ABSENT":0,"LATE":0,"LEFT_EARLY":0,"NOT_MARKED":1})
     response=client.post("/faculty/sessions/7/attendance/save-all",data={"status_10":"PRESENT","notes_10":""},follow_redirects=True)
     assert b"roster changed" in response.data
+
+
+@pytest.mark.integration
+def test_recognized_face_is_sent_to_atomic_attendance_service(client, monkeypatch):
+    login(client); captured = {}
+    monkeypatch.setattr("services.face_service.create_embedding", lambda samples: [1.0, 0.0])
+    monkeypatch.setattr(
+        "services.attendance_service.recognize_and_mark",
+        lambda sid, uid, embedding: captured.update(
+            session=sid, user=uid, embedding=embedding
+        ) or {"result": "matched", "student": {"id": 2, "full_name": "Student", "register_number": "25MCA02"}, "score": 0.91},
+    )
+    response = client.post(
+        "/faculty/sessions/7/attendance/face/recognize",
+        data={"sample": "data:image/jpeg;base64,YQ=="},
+    )
+    assert response.status_code == 200
+    assert response.get_json()["result"] == "matched"
+    assert captured == {"session": 7, "user": 4, "embedding": [1.0, 0.0]}
+
+
+@pytest.mark.integration
+def test_invalid_camera_sample_returns_json_error(client, monkeypatch):
+    login(client)
+    monkeypatch.setattr(
+        "services.face_service.create_embedding",
+        lambda samples: (_ for _ in ()).throw(Exception("must not run")),
+    )
+    response = client.post("/faculty/sessions/7/attendance/face/recognize", data={})
+    assert response.status_code == 400
+    assert response.get_json()["result"] == "invalid_sample"

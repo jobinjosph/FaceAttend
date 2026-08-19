@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Face Attendance | FaceAttend{% endblock %}
+{% block content %}<section class="dashboard-section"><div class="container narrow-container">
+<div class="page-heading-row"><div><span class="section-kicker">Faculty · Live face attendance</span><h1>{{ details.subject_name }}</h1><p>{{ details.session_date }} · P{{ details.period_number }} · {{ details.scheduled_start }}–{{ details.scheduled_end }}</p></div></div>
+<div id="face-attendance-app" class="face-capture-card" data-recognition-url="{{ url_for('faculty_attendance.recognize_face',session_id=details.id) }}">
+<input id="face-attendance-csrf" type="hidden" value="{{ csrf_token() }}">
+<div class="camera-frame"><video id="attendance-camera" autoplay muted playsinline></video><div class="camera-guide" aria-hidden="true"></div><p id="attendance-camera-message">Start the camera and place one student inside the guide.</p></div>
+<canvas id="attendance-canvas" width="640" height="480" hidden></canvas>
+<div id="recognition-result" class="recognition-result" aria-live="polite"><strong>Ready</strong><span>No attendance marked yet.</span></div>
+<div class="face-capture-actions"><button id="start-attendance-camera" class="button" type="button">Start camera</button><button id="recognize-student" class="button primary" type="button" disabled>Recognize and mark present</button></div>
+<p class="privacy-note">Each captured frame is processed for this request only. FaceAttend stores the attendance event, not the captured frame.</p>
+</div><a class="text-link" href="{{ url_for('faculty_attendance.roster',session_id=details.id) }}">← Back to Attendance Roster</a>
+</div></section><script src="{{ url_for('static',filename='js/face_attendance.js') }}" defer></script>{% endblock %}
