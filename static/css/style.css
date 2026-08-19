@@ -1464,6 +1464,17 @@ a {
 .attendance-row-form select, .attendance-row-form input { min-height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
 .bulk-save-bar { position: sticky; bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 16px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.96); box-shadow: 0 12px 35px rgba(7,24,40,.14); }
 .bulk-save-bar span { color: var(--ink-500); font-size: .82rem; }
+.face-registration-status { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: white; }
+.face-registration-status div { flex: 1; }
+.face-registration-status p, .privacy-note { margin: 4px 0 0; color: var(--ink-500); font-size: .76rem; }
+.face-capture-card { padding: 24px; border: 1px solid var(--line); border-radius: 18px; background: white; }
+.camera-frame { position: relative; overflow: hidden; aspect-ratio: 4/3; border-radius: 15px; background: var(--navy-950); }
+.camera-frame video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.camera-frame #camera-message { position: absolute; left: 14px; right: 14px; bottom: 12px; margin: 0; padding: 9px 12px; border-radius: 9px; background: rgba(4,20,35,.78); color: white; text-align: center; font-size: .78rem; }
+.camera-guide { position: absolute; top: 12%; bottom: 18%; left: 27%; right: 27%; border: 3px solid #52d7e8; border-radius: 46%; box-shadow: 0 0 0 999px rgba(4,20,35,.24); }
+.face-sample-preview { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
+.face-sample-preview img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 10px; transform: scaleX(-1); }
+.face-capture-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 
 @media (max-width: 800px) {
     .weekly-timetable { grid-template-columns: 1fr; }

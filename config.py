@@ -7,6 +7,7 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-this-key")
     DEBUG = os.getenv("FLASK_DEBUG", "1") == "1"
+    MAX_CONTENT_LENGTH = 8 * 1024 * 1024
 
     DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
     DB_PORT = int(os.getenv("DB_PORT", "3306"))
