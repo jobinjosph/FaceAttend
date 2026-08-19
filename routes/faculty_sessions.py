@@ -44,7 +44,13 @@ def end(session_id): return change_status(session_id, "ACTIVE", "REVIEW", "Sessi
 
 @faculty_sessions_bp.post("/<int:session_id>/confirm")
 @role_required("FACULTY")
-def confirm(session_id): return change_status(session_id, "REVIEW", "CONFIRMED", "Attendance session confirmed.")
+def confirm(session_id):
+    if session_service.get_faculty_session(session_id, session["user_id"]) is None:
+        abort(404)
+    if session_service.has_unmarked_records(session_id):
+        flash("Mark every student before confirming attendance.", "error")
+        return redirect(url_for("faculty_sessions.session_list"))
+    return change_status(session_id, "REVIEW", "CONFIRMED", "Attendance session confirmed.")
 
 
 @faculty_sessions_bp.post("/<int:session_id>/not-conducted")

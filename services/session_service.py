@@ -97,7 +97,7 @@ def start_session(session_id, user_id):
     cursor = connection.cursor(dictionary=True)
     try:
         cursor.execute(
-            """SELECT ats.id, ats.faculty_id, ats.status FROM attendance_sessions ats
+            """SELECT ats.id, ats.faculty_id, ats.semester_id, ats.status FROM attendance_sessions ats
                JOIN faculty f ON f.id=ats.faculty_id
                WHERE ats.id=%s AND f.user_id=%s FOR UPDATE""",
             (session_id, user_id),
@@ -114,6 +114,14 @@ def start_session(session_id, user_id):
         if cursor.fetchone():
             return "already_active"
         cursor.execute("UPDATE attendance_sessions SET status='ACTIVE', started_at=NOW() WHERE id=%s", (session_id,))
+        cursor.execute(
+            """INSERT IGNORE INTO attendance_records
+               (session_id, student_id, status, marking_method)
+               SELECT %s, st.id, 'NOT_MARKED', 'MANUAL'
+               FROM students st
+               WHERE st.semester_id=%s AND st.is_active=TRUE""",
+            (session_id, current["semester_id"]),
+        )
         connection.commit()
         return "started"
     except Exception:
@@ -145,6 +153,14 @@ def transition_session(session_id, user_id, expected_status, new_status):
     finally:
         cursor.close()
         connection.close()
+
+
+def has_unmarked_records(session_id):
+    row = _fetch_one(
+        "SELECT COUNT(*) AS total FROM attendance_records WHERE session_id=%s AND status='NOT_MARKED'",
+        (session_id,),
+    )
+    return bool(row and row["total"])
 
 
 def _fetch_all(query, params=()):

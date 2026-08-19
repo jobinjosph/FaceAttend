@@ -18,6 +18,7 @@ def test_duplicate_generation_reports_no_new_sessions(client,monkeypatch):
 def test_faculty_status_transitions(client,monkeypatch,path,expected,new):
     login(client,"FACULTY",4); captured={}
     monkeypatch.setattr("services.session_service.get_faculty_session",lambda *args:{"id":2})
+    monkeypatch.setattr("services.session_service.has_unmarked_records",lambda *args:False)
     monkeypatch.setattr("services.session_service.transition_session",lambda sid,uid,old,status:captured.update(old=old,new=status,user=uid) or True)
     response=client.post(f"/faculty/sessions/2/{path}")
     assert response.status_code==302 and captured=={"old":expected,"new":new,"user":4}

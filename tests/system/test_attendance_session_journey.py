@@ -17,6 +17,7 @@ def test_admin_generates_then_faculty_completes_session(client,monkeypatch):
         sessions[0]["status"]=new;return True
     monkeypatch.setattr("services.session_service.start_session",start)
     monkeypatch.setattr("services.session_service.transition_session",transition)
+    monkeypatch.setattr("services.session_service.has_unmarked_records",lambda sid:False)
     with client.session_transaction() as session: session.update(user_id=1,full_name="Admin",role="ADMIN")
     generated=client.post("/admin/sessions/generate",data={"session_date":"2026-08-24"},follow_redirects=True)
     assert b"Mobile Application Development" in generated.data
