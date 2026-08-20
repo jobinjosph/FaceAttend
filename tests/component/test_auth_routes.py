@@ -72,7 +72,7 @@ def test_roles_can_only_access_their_own_dashboard(
         ("STUDENT", "/dashboard/student"),
     ],
 )
-def test_logged_in_user_is_redirected_away_from_login(client, role, expected_path):
+def test_logged_in_user_sees_logout_prompt_instead_of_second_login(client, role, expected_path):
     with client.session_transaction() as user_session:
         user_session["user_id"] = 11
         user_session["full_name"] = "Logged In User"
@@ -80,5 +80,11 @@ def test_logged_in_user_is_redirected_away_from_login(client, role, expected_pat
 
     response = client.get("/login")
 
-    assert response.status_code == 302
-    assert response.headers["Location"].endswith(expected_path)
+    assert response.status_code == 200
+    assert b"Account already in use" in response.data
+    assert b"Logged In User" in response.data
+    assert b"Logout to switch account" in response.data
+    assert b'class="apple-shop-button"' in response.data
+    assert b"Continue with current account" in response.data
+    assert expected_path.encode() in response.data
+    assert b"Login securely" not in response.data

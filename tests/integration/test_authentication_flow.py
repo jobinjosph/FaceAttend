@@ -29,6 +29,59 @@ def test_admin_login_creates_session_and_redirects(client, monkeypatch):
     with client.session_transaction() as user_session:
         assert user_session["user_id"] == 1
         assert user_session["role"] == "ADMIN"
+        assert user_session["email"] == "admin@example.com"
+
+
+@pytest.mark.integration
+def test_second_login_is_blocked_until_current_user_logs_out(client, monkeypatch):
+    with client.session_transaction() as user_session:
+        user_session.update(
+            user_id=1,
+            full_name="Current Faculty",
+            email="faculty@example.com",
+            role="FACULTY",
+        )
+
+    lookup_called = False
+
+    def find_second_user(email):
+        nonlocal lookup_called
+        lookup_called = True
+        return admin_user()
+
+    monkeypatch.setattr("routes.auth.find_user_by_email", find_second_user)
+    response = client.post(
+        "/login",
+        data={"email": "admin@example.com", "password": "AdminPass123"},
+    )
+
+    assert response.status_code == 409
+    assert b"Account already in use" in response.data
+    assert b"Current Faculty" in response.data
+    assert b"Logout to switch account" in response.data
+    assert lookup_called is False
+    with client.session_transaction() as user_session:
+        assert user_session["user_id"] == 1
+        assert user_session["role"] == "FACULTY"
+
+
+@pytest.mark.integration
+def test_user_can_login_with_another_account_after_logout(client, monkeypatch):
+    with client.session_transaction() as user_session:
+        user_session.update(user_id=4, full_name="Old User", role="FACULTY")
+
+    client.post("/logout")
+    monkeypatch.setattr("routes.auth.find_user_by_email", lambda email: admin_user())
+    response = client.post(
+        "/login",
+        data={"email": "admin@example.com", "password": "AdminPass123"},
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/dashboard/admin")
+    with client.session_transaction() as user_session:
+        assert user_session["user_id"] == 1
+        assert user_session["role"] == "ADMIN"
 
 
 @pytest.mark.integration

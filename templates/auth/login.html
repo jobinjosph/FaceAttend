@@ -7,8 +7,8 @@
     <div class="auth-card">
         <div class="auth-heading">
             <span class="section-kicker">Secure portal</span>
-            <h1>Welcome back</h1>
-            <p>Use your FaceAttend account to continue to your dashboard.</p>
+            <h1>{{ 'Account already in use' if active_session else 'Welcome back' }}</h1>
+            <p>{% if active_session %}FaceAttend already has an active account in this browser.{% else %}Use your FaceAttend account to continue to your dashboard.{% endif %}</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -17,6 +17,20 @@
             {% endfor %}
         {% endwith %}
 
+        {% if active_session %}
+        <div class="active-login-warning" role="alert">
+            <strong>{{ active_user.full_name }}</strong>
+            <span>{{ active_user.role|title }}{% if active_user.email %} · {{ active_user.email }}{% endif %}</span>
+            <p>Log out of this account before another user signs in. This prevents one account from being replaced accidentally.</p>
+        </div>
+        <div class="active-login-actions">
+            <a class="button" href="{{ dashboard_url }}">Continue with current account</a>
+            <form method="post" action="{{ url_for('auth.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="apple-shop-button" type="submit">Logout to switch account</button>
+            </form>
+        </div>
+        {% else %}
         <form method="post" class="auth-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -43,6 +57,7 @@
         </form>
 
         <p class="auth-help">Your role is detected automatically from your account.</p>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

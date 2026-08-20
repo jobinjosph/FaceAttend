@@ -1484,6 +1484,19 @@ a {
 .recognition-result.warning { border-color: #f0cf83; background: #fff8e7; }
 .recognition-result.error { border-color: #efb0b0; background: #fff1f1; }
 .continuous-camera-note { margin: 14px 0 0; color: var(--ink-500); line-height: 1.6; }
+.active-login-warning { display: grid; gap: 6px; margin: 22px 0; padding: 18px; border: 1px solid #f0cf83; border-radius: 14px; background: #fff8e7; }
+.active-login-warning strong { font-size: 1.1rem; }
+.active-login-warning span,
+.active-login-warning p { color: var(--ink-500); }
+.active-login-warning p { margin: 8px 0 0; line-height: 1.6; }
+.active-login-actions { display: grid; gap: 12px; width: 100%; }
+.active-login-actions form { width: 100%; margin: 0; }
+.active-login-actions .button,
+.active-login-actions .apple-shop-button { display: inline-flex; width: 100%; align-items: center; justify-content: center; text-align: center; }
+.apple-shop-button { appearance: none; min-height: 0; padding: 11px 20px; border: 0; border-radius: 980px; background: #0071e3; color: #fff; box-shadow: none; font: inherit; font-size: .86rem; font-weight: 500; line-height: 1.2; cursor: pointer; transition: background-color .18s ease; }
+.apple-shop-button:hover { background: #0077ed; }
+.apple-shop-button:active { background: #006edb; }
+.apple-shop-button:focus-visible { outline: 3px solid rgba(0,113,227,.28); outline-offset: 3px; }
 
 @media (max-width: 800px) {
     .weekly-timetable { grid-template-columns: 1fr; }

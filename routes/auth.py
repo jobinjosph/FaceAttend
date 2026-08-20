@@ -17,8 +17,16 @@ ROLE_DASHBOARDS = {
 def login():
     if "user_id" in session:
         endpoint = ROLE_DASHBOARDS.get(session.get("role"))
-        if endpoint:
-            return redirect(url_for(endpoint))
+        return render_template(
+            "auth/login.html",
+            active_session=True,
+            active_user={
+                "full_name": session.get("full_name", "Current user"),
+                "email": session.get("email"),
+                "role": session.get("role", "USER"),
+            },
+            dashboard_url=url_for(endpoint) if endpoint else url_for("main.home"),
+        ), 409 if request.method == "POST" else 200
 
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
@@ -51,6 +59,7 @@ def login():
         session.clear()
         session["user_id"] = user["id"]
         session["full_name"] = user["full_name"]
+        session["email"] = user["email"]
         session["role"] = user["role"]
 
         return redirect(url_for(endpoint))
