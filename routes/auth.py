@@ -43,8 +43,12 @@ def login():
             flash("Login is temporarily unavailable. Please try again later.", "error")
             return render_template("auth/login.html", email=email), 503
 
-        if not user or not verify_password(user["password_hash"], password):
+        if not user:
             flash("Incorrect email or password.", "error")
+            return render_template("auth/login.html", email=email), 401
+
+        if not verify_password(user["password_hash"], password):
+            flash("Incorrect password. Please try again.", "error")
             return render_template("auth/login.html", email=email), 401
 
         if not user["is_active"]:

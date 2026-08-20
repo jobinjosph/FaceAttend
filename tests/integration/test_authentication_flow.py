@@ -94,7 +94,7 @@ def test_invalid_password_does_not_create_session(client, monkeypatch):
     )
 
     assert response.status_code == 401
-    assert b"Incorrect email or password." in response.data
+    assert b"Incorrect password. Please try again." in response.data
     with client.session_transaction() as user_session:
         assert "user_id" not in user_session
 

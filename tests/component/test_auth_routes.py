@@ -19,6 +19,30 @@ def test_empty_login_form_is_rejected(client):
 
 
 @pytest.mark.component
+def test_login_page_can_display_incorrect_password_message(client, monkeypatch):
+    from services.auth_service import hash_password
+
+    monkeypatch.setattr(
+        "routes.auth.find_user_by_email",
+        lambda email: {
+            "id": 4,
+            "full_name": "Faculty",
+            "email": email,
+            "password_hash": hash_password("CorrectPassword123"),
+            "role": "FACULTY",
+            "is_active": True,
+        },
+    )
+    response = client.post(
+        "/login",
+        data={"email": "faculty@example.com", "password": "WrongPassword"},
+    )
+
+    assert response.status_code == 401
+    assert b"Incorrect password. Please try again." in response.data
+
+
+@pytest.mark.component
 def test_logged_out_user_is_redirected_from_dashboard(client):
     response = client.get("/dashboard/admin")
 
