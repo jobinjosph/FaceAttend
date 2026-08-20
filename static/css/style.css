@@ -1483,6 +1483,7 @@ a {
 .recognition-result.success { border-color: #9eddbb; background: #edfbf3; }
 .recognition-result.warning { border-color: #f0cf83; background: #fff8e7; }
 .recognition-result.error { border-color: #efb0b0; background: #fff1f1; }
+.continuous-camera-note { margin: 14px 0 0; color: var(--ink-500); line-height: 1.6; }
 
 @media (max-width: 800px) {
     .weekly-timetable { grid-template-columns: 1fr; }

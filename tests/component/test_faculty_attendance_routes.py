@@ -53,7 +53,8 @@ def test_active_session_has_face_attendance_camera_page(client, monkeypatch):
     })
     response = client.get("/faculty/sessions/1/attendance/face")
     assert response.status_code == 200
-    assert b"Recognize and mark present" in response.data
+    assert b"Start attendance camera" in response.data
+    assert b"Students can then approach one by one" in response.data
     assert b"attendance-camera" in response.data
 
 

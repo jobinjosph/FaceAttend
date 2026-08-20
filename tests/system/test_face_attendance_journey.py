@@ -27,7 +27,8 @@ def test_faculty_recognizes_student_then_sees_present_roster(client, monkeypatch
         session.update(user_id=4, full_name="Faculty", role="FACULTY")
 
     camera = client.get("/faculty/sessions/1/attendance/face")
-    assert b"Recognize and mark present" in camera.data
+    assert b"Start attendance camera" in camera.data
+    assert b"continues automatically" in camera.data
     marked = client.post(
         "/faculty/sessions/1/attendance/face/recognize",
         data={"sample": "data:image/jpeg;base64,YQ=="},

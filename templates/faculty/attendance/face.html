@@ -5,8 +5,9 @@
 <input id="face-attendance-csrf" type="hidden" value="{{ csrf_token() }}">
 <div class="camera-frame"><video id="attendance-camera" autoplay muted playsinline></video><div class="camera-guide" aria-hidden="true"></div><p id="attendance-camera-message">Start the camera and place one student inside the guide.</p></div>
 <canvas id="attendance-canvas" width="640" height="480" hidden></canvas>
-<div id="recognition-result" class="recognition-result" aria-live="polite"><strong>Ready</strong><span>No attendance marked yet.</span></div>
-<div class="face-capture-actions"><button id="start-attendance-camera" class="button" type="button">Start camera</button><button id="recognize-student" class="button primary" type="button" disabled>Recognize and mark present</button></div>
+<div id="recognition-result" class="recognition-result" aria-live="polite"><strong>Ready for students</strong><span>The lecturer starts the camera once. Students can then approach one by one.</span></div>
+<div class="face-capture-actions"><button id="toggle-attendance-camera" class="button primary" type="button">Start attendance camera</button></div>
+<p class="continuous-camera-note">After each result, ask that student to move away and allow the next student to stand inside the guide. Recognition continues automatically until the lecturer stops the camera or leaves this page.</p>
 <p class="privacy-note">Each captured frame is processed for this request only. FaceAttend stores the attendance event, not the captured frame.</p>
 </div><a class="text-link" href="{{ url_for('faculty_attendance.roster',session_id=details.id) }}">← Back to Attendance Roster</a>
 </div></section><script src="{{ url_for('static',filename='js/face_attendance.js') }}" defer></script>{% endblock %}
