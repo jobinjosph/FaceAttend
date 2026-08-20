@@ -1497,6 +1497,10 @@ a {
 .apple-shop-button:hover { background: #0077ed; }
 .apple-shop-button:active { background: #006edb; }
 .apple-shop-button:focus-visible { outline: 3px solid rgba(0,113,227,.28); outline-offset: 3px; }
+.apple-shop-button-grey { background: #b9b9b9; color: #111; }
+.apple-shop-button-grey:hover { background: #c2c2c2; }
+.apple-shop-button-grey:active { background: #ababab; }
+.apple-shop-button-grey:focus-visible { outline-color: rgba(80,80,80,.3); }
 
 @media (max-width: 800px) {
     .weekly-timetable { grid-template-columns: 1fr; }
