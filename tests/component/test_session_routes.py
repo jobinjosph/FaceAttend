@@ -22,6 +22,8 @@ def test_admin_can_view_empty_date(client,monkeypatch):
     assert response.status_code==200 and b"No sessions for 2026-08-24" in response.data
     assert b'class="apple-shop-button"' in response.data
     assert b'class="apple-shop-button apple-shop-button-grey"' in response.data
+    assert b'class="session-date-field"' in response.data
+    assert b'<label for="date">View date</label>' in response.data
 
 
 @pytest.mark.component

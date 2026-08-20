@@ -1449,6 +1449,8 @@ a {
 .session-toolbar, .session-toolbar form, .session-date-filter { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; }
 .session-toolbar { justify-content: space-between; margin-bottom: 20px; }
 .session-toolbar label, .session-date-filter label { display: grid; gap: 5px; font-size: .78rem; font-weight: 750; }
+.session-date-field { display: grid; gap: 5px; }
+.session-date-field label { width: 100%; text-align: center; }
 .session-toolbar input, .session-date-filter input { min-height: 46px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; }
 .session-date-filter { margin-bottom: 20px; }
 .session-card-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
