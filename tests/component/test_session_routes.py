@@ -20,6 +20,7 @@ def test_admin_can_view_empty_date(client,monkeypatch):
     login(client,"ADMIN"); monkeypatch.setattr("services.session_service.list_sessions",lambda day:[])
     response=client.get("/admin/sessions?date=2026-08-24")
     assert response.status_code==200 and b"No sessions for 2026-08-24" in response.data
+    assert b'class="apple-shop-button"' in response.data
 
 
 @pytest.mark.component
