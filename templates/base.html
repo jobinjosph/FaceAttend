@@ -6,7 +6,7 @@
     <meta name="description" content="FaceAttend - smart period-based student attendance using face recognition.">
     <title>{% block title %}FaceAttend{% endblock %}</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='5') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='6') }}">
 </head>
 <body>
     <header class="site-header">
@@ -46,7 +46,33 @@
                     <a href="#features">Features</a>
                     <a href="#workflow">Workflow</a>
                     <a href="#portal">Attendance Portal</a>
-                    <a class="nav-cta" href="{{ url_for('auth.login') }}">Login</a>
+                    {% if session.get('user_id') %}
+                        <details class="account-menu">
+                            <summary class="nav-cta account-menu-trigger">
+                                <span class="account-avatar" aria-hidden="true">{{ session.get('full_name', 'User')[0]|upper }}</span>
+                                <span>{{ session.get('full_name', 'User') }}</span>
+                                <span class="account-chevron" aria-hidden="true">⌄</span>
+                            </summary>
+                            <div class="account-menu-panel">
+                                <div class="account-menu-identity">
+                                    <span class="account-avatar account-avatar-large" aria-hidden="true">{{ session.get('full_name', 'User')[0]|upper }}</span>
+                                    <span>
+                                        <strong>{{ session.get('full_name', 'User') }}</strong>
+                                        <small>{{ session.get('role', 'User')|title }}</small>
+                                    </span>
+                                </div>
+                                <form method="post" action="{{ url_for('auth.logout') }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="account-logout" type="submit">
+                                        <span aria-hidden="true">↪</span>
+                                        Log out
+                                    </button>
+                                </form>
+                            </div>
+                        </details>
+                    {% else %}
+                        <a class="nav-cta" href="{{ url_for('auth.login') }}">Login</a>
+                    {% endif %}
                 </div>
             </div>
         </nav>

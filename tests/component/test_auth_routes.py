@@ -84,7 +84,9 @@ def test_roles_can_only_access_their_own_dashboard(
 
     allowed_response = client.get(allowed_path)
     assert allowed_response.status_code == 200
-    assert b'class="nav-cta dashboard-logout"' in allowed_response.data
+    assert b'class="account-menu"' in allowed_response.data
+    assert b"Role Test User" in allowed_response.data
+    assert b'class="account-logout"' in allowed_response.data
     for path in forbidden_paths:
         assert client.get(path).status_code == 403
 

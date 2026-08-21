@@ -9,11 +9,6 @@
                 <h1>Welcome, {{ session.full_name }}</h1>
                 <p>{{ dashboard_message }}</p>
             </div>
-
-            <form method="post" action="{{ url_for('auth.logout') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="nav-cta dashboard-logout" type="submit">Log out</button>
-            </form>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
