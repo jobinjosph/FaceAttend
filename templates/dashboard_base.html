@@ -12,7 +12,7 @@
 
             <form method="post" action="{{ url_for('auth.logout') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="button dashboard-logout" type="submit">Log out</button>
+                <button class="nav-cta dashboard-logout" type="submit">Log out</button>
             </form>
         </div>
 

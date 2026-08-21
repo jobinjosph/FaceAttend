@@ -994,15 +994,15 @@ a {
 }
 
 .dashboard-logout {
-    border: 1px solid #989da3;
-    background: #b8bdc2;
-    color: var(--ink-900);
+    border: 0;
+    background: #6f7782;
+    color: white !important;
+    font: inherit;
     cursor: pointer;
 }
 
 .dashboard-logout:hover {
-    background: #aab0b6;
-    box-shadow: 0 8px 18px rgba(15, 35, 56, .16);
+    background: #5e6671;
 }
 
 .dashboard-logout:focus-visible {
