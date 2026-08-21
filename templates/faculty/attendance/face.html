@@ -3,11 +3,16 @@
 <div class="page-heading-row"><div><span class="section-kicker">Faculty · Live face attendance</span><h1>{{ details.subject_name }}</h1><p>{{ details.session_date }} · P{{ details.period_number }} · {{ details.scheduled_start }}–{{ details.scheduled_end }}</p></div></div>
 <div id="face-attendance-app" class="face-capture-card" data-recognition-url="{{ url_for('faculty_attendance.recognize_face',session_id=details.id) }}">
 <input id="face-attendance-csrf" type="hidden" value="{{ csrf_token() }}">
+<div class="attendance-mode-selector" role="group" aria-label="Attendance camera mode">
+<button class="attendance-mode-button active" type="button" data-attendance-mode="ENTRY">Entry Mode</button>
+<button class="attendance-mode-button" type="button" data-attendance-mode="EXIT">Exit Mode</button>
+</div>
+<p id="attendance-mode-help" class="attendance-mode-help">Entry Mode records each recognized student's arrival time.</p>
 <div class="camera-frame"><video id="attendance-camera" autoplay muted playsinline></video><div class="camera-guide" aria-hidden="true"></div><p id="attendance-camera-message">Start the camera and place one student inside the guide.</p></div>
 <canvas id="attendance-canvas" width="640" height="480" hidden></canvas>
 <div id="recognition-result" class="recognition-result" aria-live="polite"><strong>Ready for students</strong><span>The lecturer starts the camera once. Students can then approach one by one.</span></div>
 <div class="face-capture-actions"><button id="toggle-attendance-camera" class="button primary" type="button">Start attendance camera</button></div>
-<p class="continuous-camera-note">After each result, ask that student to move away and allow the next student to stand inside the guide. Recognition continues automatically until the lecturer stops the camera or leaves this page.</p>
+<p class="continuous-camera-note">Choose Entry Mode when students arrive and Exit Mode when they leave. After each result, ask that student to move away. Recognition continues automatically until the lecturer stops the camera or leaves this page.</p>
 <p class="privacy-note">Each captured frame is processed for this request only. FaceAttend stores the attendance event, not the captured frame.</p>
 </div><a class="text-link" href="{{ url_for('faculty_attendance.roster',session_id=details.id) }}">← Back to Attendance Roster</a>
-</div></section><script src="{{ url_for('static',filename='js/face_attendance.js') }}" defer></script>{% endblock %}
+</div></section><script src="{{ url_for('static',filename='js/face_attendance.js',v='2') }}" defer></script>{% endblock %}

@@ -37,23 +37,30 @@ def face_attendance(session_id):
 @faculty_attendance_bp.post("/<int:session_id>/attendance/face/recognize")
 @role_required("FACULTY")
 def recognize_face(session_id):
+    mode = request.form.get("mode", "ENTRY").strip().upper()
+    if mode not in attendance_service.FACE_ATTENDANCE_MODES:
+        return jsonify(result="invalid_mode", message="Select Entry Mode or Exit Mode."), 400
     try:
         sample = face_service.parse_probe(request.form.get("sample"))
         probe = face_service.create_embedding([sample])
         result = attendance_service.recognize_and_mark(
-            session_id, session["user_id"], probe
+            session_id, session["user_id"], probe, mode
         )
     except face_service.FaceSampleError as exc:
         return jsonify(result="invalid_sample", message=str(exc)), 400
 
     response_codes = {
-        "matched": 200,
-        "duplicate": 200,
+        "entry_recorded": 200,
+        "exit_recorded": 200,
+        "duplicate_entry": 200,
+        "duplicate_exit": 200,
+        "entry_required": 409,
         "unknown": 404,
         "ambiguous": 409,
         "no_registered": 409,
         "locked": 409,
         "not_found": 404,
+        "invalid_mode": 400,
     }
     return jsonify(result), response_codes[result["result"]]
 

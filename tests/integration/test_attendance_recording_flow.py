@@ -48,17 +48,38 @@ def test_recognized_face_is_sent_to_atomic_attendance_service(client, monkeypatc
     monkeypatch.setattr("services.face_service.create_embedding", lambda samples: [1.0, 0.0])
     monkeypatch.setattr(
         "services.attendance_service.recognize_and_mark",
-        lambda sid, uid, embedding: captured.update(
-            session=sid, user=uid, embedding=embedding
-        ) or {"result": "matched", "student": {"id": 2, "full_name": "Student", "register_number": "25MCA02"}, "score": 0.91},
+        lambda sid, uid, embedding, mode: captured.update(
+            session=sid, user=uid, embedding=embedding, mode=mode
+        ) or {"result": "entry_recorded", "event_type": "ENTRY", "student": {"id": 2, "full_name": "Student", "register_number": "25MCA02"}, "score": 0.91},
     )
     response = client.post(
         "/faculty/sessions/7/attendance/face/recognize",
         data={"sample": "data:image/jpeg;base64,YQ=="},
     )
     assert response.status_code == 200
-    assert response.get_json()["result"] == "matched"
-    assert captured == {"session": 7, "user": 4, "embedding": [1.0, 0.0]}
+    assert response.get_json()["result"] == "entry_recorded"
+    assert captured == {"session": 7, "user": 4, "embedding": [1.0, 0.0], "mode": "ENTRY"}
+
+
+@pytest.mark.integration
+def test_exit_mode_is_sent_to_atomic_attendance_service(client, monkeypatch):
+    login(client); captured = {}
+    monkeypatch.setattr("services.face_service.create_embedding", lambda samples: [1.0, 0.0])
+    monkeypatch.setattr(
+        "services.attendance_service.recognize_and_mark",
+        lambda sid, uid, embedding, mode: captured.update(mode=mode) or {
+            "result": "exit_recorded", "event_type": "EXIT",
+            "student": {"id": 2, "full_name": "Student", "register_number": "25MCA02"},
+            "score": 0.91, "duration_seconds": 2700, "status": "PRESENT",
+        },
+    )
+    response = client.post(
+        "/faculty/sessions/7/attendance/face/recognize",
+        data={"sample": "data:image/jpeg;base64,YQ==", "mode": "EXIT"},
+    )
+    assert response.status_code == 200
+    assert response.get_json()["duration_seconds"] == 2700
+    assert captured == {"mode": "EXIT"}
 
 
 @pytest.mark.integration

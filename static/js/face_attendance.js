@@ -6,11 +6,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const toggle = document.querySelector("#toggle-attendance-camera");
     const message = document.querySelector("#attendance-camera-message");
     const result = document.querySelector("#recognition-result");
+    const modeButtons = document.querySelectorAll("[data-attendance-mode]");
+    const modeHelp = document.querySelector("#attendance-mode-help");
     const csrf = document.querySelector("#face-attendance-csrf").value;
     let stream = null;
     let running = false;
     let processing = false;
     let scanTimer = null;
+    let attendanceMode = "ENTRY";
+
+    const modeLabel = () => attendanceMode === "ENTRY" ? "Entry Mode" : "Exit Mode";
+
+    const formatDuration = (seconds) => {
+        const safeSeconds = Math.max(0, Number(seconds) || 0);
+        const minutes = Math.floor(safeSeconds / 60);
+        const remainder = safeSeconds % 60;
+        return `${minutes}m ${remainder}s`;
+    };
 
     const showResult = (title, detail, state) => {
         result.className = `recognition-result ${state || ""}`;
@@ -54,6 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const form = new FormData();
         form.append("csrf_token", csrf);
         form.append("sample", canvas.toDataURL("image/jpeg", 0.88));
+        form.append("mode", attendanceMode);
         let nextDelay = 1800;
         try {
             const response = await fetch(app.dataset.recognitionUrl, {
@@ -62,12 +75,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: {"Accept": "application/json"},
             });
             const data = await response.json();
-            if (data.result === "matched") {
-                showResult("Attendance marked ✓", `${data.student.full_name} · ${data.student.register_number}. Next student may approach.`, "success");
-                message.textContent = "Attendance recorded. Please move away for the next student.";
+            if (data.result === "entry_recorded") {
+                const status = data.status === "LATE" ? " · Marked late" : "";
+                showResult("Entry recorded ✓", `${data.student.full_name} · ${data.student.register_number}${status}. Next student may approach.`, "success");
+                message.textContent = "Entry recorded. Please move away for the next student.";
                 nextDelay = 3500;
-            } else if (data.result === "duplicate") {
-                showResult("Attendance already marked", `${data.student.full_name} · ${data.student.register_number}. Please allow the next student.`, "warning");
+            } else if (data.result === "exit_recorded") {
+                showResult("Exit recorded ✓", `${data.student.full_name} · ${data.student.register_number} · Present for ${formatDuration(data.duration_seconds)}.`, "success");
+                message.textContent = "Exit recorded. Please move away for the next student.";
+                nextDelay = 3500;
+            } else if (data.result === "duplicate_entry") {
+                showResult("Entry already recorded", `${data.student.full_name} · ${data.student.register_number}. Please allow the next student.`, "warning");
+                nextDelay = 2500;
+            } else if (data.result === "duplicate_exit") {
+                showResult("Exit already recorded", `${data.student.full_name} · ${data.student.register_number} · Recorded duration ${formatDuration(data.duration_seconds)}.`, "warning");
+                nextDelay = 2500;
+            } else if (data.result === "entry_required") {
+                showResult("No entry found", `${data.student.full_name} must record an entry before recording an exit.`, "warning");
                 nextDelay = 2500;
             } else if (data.result === "unknown") {
                 showResult("Face not recognized", "Try again in better lighting or ask the lecturer to mark attendance manually.", "error");
@@ -94,6 +118,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    modeButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            attendanceMode = button.dataset.attendanceMode;
+            modeButtons.forEach((item) => item.classList.toggle("active", item === button));
+            modeHelp.textContent = attendanceMode === "ENTRY"
+                ? "Entry Mode records each recognized student's arrival time."
+                : "Exit Mode records departure time and calculates presence duration.";
+            message.textContent = running
+                ? `${modeLabel()} active. Students may approach one by one.`
+                : `${modeLabel()} selected. Start the camera when ready.`;
+            showResult(modeLabel(), attendanceMode === "ENTRY"
+                ? "Waiting to record student arrivals."
+                : "Waiting to record student departures.", "pending");
+        });
+    });
+
     toggle.addEventListener("click", async () => {
         if (running) {
             stopCamera();
@@ -110,8 +150,8 @@ document.addEventListener("DOMContentLoaded", () => {
             running = true;
             toggle.textContent = "Stop attendance camera";
             toggle.classList.remove("primary");
-            message.textContent = "Camera active. Students may approach one by one.";
-            showResult("Continuous attendance started", "Waiting for the first student…", "pending");
+            message.textContent = `${modeLabel()} active. Students may approach one by one.`;
+            showResult(`${modeLabel()} started`, "Waiting for the first student…", "pending");
             scheduleScan(800);
         } catch (error) {
             message.textContent = "Camera access failed. Allow camera permission and try again.";

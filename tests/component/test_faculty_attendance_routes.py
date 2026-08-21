@@ -56,6 +56,8 @@ def test_active_session_has_face_attendance_camera_page(client, monkeypatch):
     assert b"Start attendance camera" in response.data
     assert b"Students can then approach one by one" in response.data
     assert b"attendance-camera" in response.data
+    assert b"Entry Mode" in response.data
+    assert b"Exit Mode" in response.data
 
 
 @pytest.mark.component
@@ -73,3 +75,14 @@ def test_student_cannot_call_face_recognition_api(client):
     login(client, "STUDENT")
     response = client.post("/faculty/sessions/1/attendance/face/recognize", data={"sample": "x"})
     assert response.status_code == 403
+
+
+@pytest.mark.component
+def test_invalid_face_attendance_mode_is_rejected(client):
+    login(client)
+    response = client.post(
+        "/faculty/sessions/1/attendance/face/recognize",
+        data={"mode": "UNKNOWN", "sample": "data:image/jpeg;base64,YQ=="},
+    )
+    assert response.status_code == 400
+    assert response.get_json()["result"] == "invalid_mode"

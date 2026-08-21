@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 
 from db import get_db_connection
 from services import face_service
@@ -7,6 +8,9 @@ from services import face_service
 MANUAL_STATUSES = ("PRESENT", "ABSENT", "LATE", "LEFT_EARLY", "NOT_MARKED")
 EDITABLE_SESSION_STATUSES = ("ACTIVE", "REVIEW")
 FACE_MATCH_AMBIGUITY_MARGIN = 0.05
+FACE_ATTENDANCE_MODES = ("ENTRY", "EXIT")
+LATE_AFTER_MINUTES = 10
+EARLY_EXIT_BEFORE_MINUTES = 5
 
 
 def normalize_attendance_data(form_data):
@@ -65,7 +69,7 @@ def list_roster(session_id):
     return _fetch_all(
         """
         SELECT ar.id AS record_id, ar.student_id, ar.status, ar.first_entry,
-               ar.last_exit, ar.notes, ar.marking_method,
+               ar.last_exit, ar.total_present_seconds, ar.notes, ar.marking_method,
                st.register_number, st.full_name
         FROM attendance_records ar
         JOIN students st ON st.id=ar.student_id
@@ -173,13 +177,21 @@ def update_records_bulk(session_id, user_id, records):
         cursor.close(); connection.close()
 
 
-def recognize_and_mark(session_id, user_id, probe_embedding):
-    """Match one probe against the session roster and atomically mark entry."""
+def recognize_and_mark(session_id, user_id, probe_embedding, mode="ENTRY", now=None):
+    """Match one face and atomically record its entry or exit event."""
+    mode = str(mode).strip().upper()
+    if mode not in FACE_ATTENDANCE_MODES:
+        return {"result": "invalid_mode"}
+
+    event_time = now or datetime.now()
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
     try:
         cursor.execute(
-            """SELECT ats.status FROM attendance_sessions ats
+            """SELECT ats.status,
+                      TIMESTAMP(ats.session_date, ats.scheduled_start) AS scheduled_start_at,
+                      TIMESTAMP(ats.session_date, ats.scheduled_end) AS scheduled_end_at
+               FROM attendance_sessions ats
                JOIN faculty f ON f.id=ats.faculty_id
                WHERE ats.id=%s AND f.user_id=%s FOR UPDATE""",
             (session_id, user_id),
@@ -193,7 +205,8 @@ def recognize_and_mark(session_id, user_id, probe_embedding):
             return {"result": "locked"}
 
         cursor.execute(
-            """SELECT ar.student_id, ar.status, ar.first_entry,
+            """SELECT ar.student_id, ar.status, ar.first_entry, ar.last_exit,
+                      ar.total_present_seconds,
                       st.register_number, st.full_name, fe.embedding_data
                FROM attendance_records ar
                JOIN students st ON st.id=ar.student_id AND st.is_active=TRUE
@@ -231,25 +244,69 @@ def recognize_and_mark(session_id, user_id, probe_embedding):
             "register_number": matched["register_number"],
             "full_name": matched["full_name"],
         }
-        if matched["first_entry"] is not None or matched["status"] in ("PRESENT", "LATE"):
-            connection.rollback()
-            return {"result": "duplicate", "student": student, "score": round(best_score, 5)}
+        score = round(best_score, 5)
+        if mode == "ENTRY":
+            if matched["first_entry"] is not None:
+                connection.rollback()
+                return {
+                    "result": "duplicate_entry", "student": student, "score": score,
+                }
+            attendance_status = _entry_status(
+                event_time, active_session.get("scheduled_start_at")
+            )
+            cursor.execute(
+                """UPDATE attendance_records
+                   SET status=%s, first_entry=%s, last_exit=NULL,
+                       total_present_seconds=0, marking_method='FACE',
+                       teacher_override=FALSE, notes=NULL
+                   WHERE session_id=%s AND student_id=%s""",
+                (attendance_status, event_time, session_id, matched["student_id"]),
+            )
+            result_name = "entry_recorded"
+            duration_seconds = 0
+        else:
+            if matched["first_entry"] is None:
+                connection.rollback()
+                return {
+                    "result": "entry_required", "student": student, "score": score,
+                }
+            if matched["last_exit"] is not None:
+                connection.rollback()
+                return {
+                    "result": "duplicate_exit", "student": student, "score": score,
+                    "duration_seconds": matched.get("total_present_seconds") or 0,
+                }
+            duration_seconds = _presence_seconds(matched["first_entry"], event_time)
+            attendance_status = _exit_status(
+                matched["status"], event_time, active_session.get("scheduled_end_at")
+            )
+            cursor.execute(
+                """UPDATE attendance_records
+                   SET status=%s, last_exit=%s, total_present_seconds=%s,
+                       marking_method='FACE', teacher_override=FALSE, notes=NULL
+                   WHERE session_id=%s AND student_id=%s""",
+                (
+                    attendance_status, event_time, duration_seconds,
+                    session_id, matched["student_id"],
+                ),
+            )
+            result_name = "exit_recorded"
 
-        cursor.execute(
-            """UPDATE attendance_records
-               SET status='PRESENT', first_entry=NOW(), marking_method='FACE',
-                   teacher_override=FALSE, notes=NULL
-               WHERE session_id=%s AND student_id=%s""",
-            (session_id, matched["student_id"]),
-        )
         cursor.execute(
             """INSERT INTO attendance_events
                (session_id, student_id, event_type, event_time, similarity_score, source)
-               VALUES (%s,%s,'ENTRY',NOW(),%s,'FACE')""",
-            (session_id, matched["student_id"], round(best_score, 5)),
+               VALUES (%s,%s,%s,%s,%s,'FACE')""",
+            (session_id, matched["student_id"], mode, event_time, score),
         )
         connection.commit()
-        return {"result": "matched", "student": student, "score": round(best_score, 5)}
+        return {
+            "result": result_name,
+            "event_type": mode,
+            "student": student,
+            "score": score,
+            "status": attendance_status,
+            "duration_seconds": duration_seconds,
+        }
     except Exception:
         connection.rollback()
         raise
@@ -263,6 +320,38 @@ def _deserialize_embedding(value):
     if not isinstance(value, list):
         raise ValueError("Stored face embedding is invalid.")
     return value
+
+
+def _entry_status(event_time, scheduled_start_at):
+    scheduled_start_at = _as_datetime(scheduled_start_at)
+    if scheduled_start_at and event_time > scheduled_start_at + timedelta(minutes=LATE_AFTER_MINUTES):
+        return "LATE"
+    return "PRESENT"
+
+
+def _exit_status(current_status, event_time, scheduled_end_at):
+    scheduled_end_at = _as_datetime(scheduled_end_at)
+    if scheduled_end_at and event_time < scheduled_end_at - timedelta(minutes=EARLY_EXIT_BEFORE_MINUTES):
+        return "LEFT_EARLY"
+    return current_status if current_status in ("PRESENT", "LATE") else "PRESENT"
+
+
+def _presence_seconds(first_entry, exit_time):
+    first_entry = _as_datetime(first_entry)
+    if first_entry is None:
+        return 0
+    return max(0, int((exit_time - first_entry).total_seconds()))
+
+
+def _as_datetime(value):
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            return None
+    return None
 
 
 def _fetch_all(query, params=()):

@@ -1582,6 +1582,11 @@ a {
 .face-sample-preview { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
 .face-sample-preview img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 10px; transform: scaleX(-1); }
 .face-capture-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.attendance-mode-selector { display: inline-flex; gap: 4px; margin-bottom: 8px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-soft); }
+.attendance-mode-button { padding: 10px 18px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-500); font: inherit; font-weight: 750; cursor: pointer; }
+.attendance-mode-button.active { background: var(--blue-500); color: white; box-shadow: 0 6px 16px rgba(41,121,255,.24); }
+.attendance-mode-button:focus-visible { outline: 3px solid rgba(41,121,255,.3); outline-offset: 2px; }
+.attendance-mode-help { margin: 0 0 16px; color: var(--ink-500); font-size: .86rem; }
 .face-attendance-launch { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; padding: 18px; border: 1px solid #b8d3ff; border-radius: 14px; background: #eef5ff; }
 .face-attendance-launch p { margin: 4px 0 0; color: var(--ink-500); }
 .recognition-result { display: grid; gap: 4px; margin-top: 16px; padding: 16px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-soft); }
