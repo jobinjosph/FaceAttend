@@ -72,6 +72,8 @@ def test_admin_can_open_add_student_form(client, monkeypatch):
     assert b"Search programmes" in response.data
     assert b'data-course-combobox' in response.data
     assert b'data-value="1"' in response.data
+    assert b"Student login email" in response.data
+    assert b"Initial password" in response.data
 
 
 @pytest.mark.component

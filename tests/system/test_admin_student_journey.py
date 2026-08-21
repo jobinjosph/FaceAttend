@@ -19,6 +19,7 @@ def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
         students.append(
             {
                 "id": 1,
+                "user_id": 20,
                 **data,
                 "face_registered": False,
                 "is_active": True,
@@ -56,6 +57,7 @@ def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
             "register_number": "23mca104",
             "full_name": "Test Student",
             "email": "student@example.com",
+            "password": "Student@123",
             "course_id": "1",
             "semester_id": "2",
         },
@@ -70,6 +72,7 @@ def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
             "register_number": "23MCA104",
             "full_name": "Updated Student",
             "email": "updated@example.com",
+            "password": "",
             "course_id": "1",
             "semester_id": "2",
         },
@@ -77,6 +80,7 @@ def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
     )
     assert edited.status_code == 200
     assert b"Updated Student" in edited.data
+    assert b"Linked" in edited.data
 
     deactivated = client.post(
         "/admin/students/1/status",

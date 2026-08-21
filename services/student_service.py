@@ -1,6 +1,7 @@
 import re
 
 from db import get_db_connection
+from services.auth_service import hash_password
 
 
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
@@ -17,12 +18,13 @@ def normalize_student_data(form_data):
         ),
         "full_name": " ".join(form_data.get("full_name", "").strip().split()),
         "email": form_data.get("email", "").strip().lower(),
+        "password": form_data.get("password", ""),
         "course_id": form_data.get("course_id", "").strip(),
         "semester_id": form_data.get("semester_id", "").strip(),
     }
 
 
-def validate_student_data(data):
+def validate_student_data(data, require_password=False):
     errors = {}
 
     if not data["register_number"]:
@@ -35,8 +37,15 @@ def validate_student_data(data):
     elif len(data["full_name"]) > 150:
         errors["full_name"] = "Student name is too long."
 
-    if data["email"] and not EMAIL_PATTERN.fullmatch(data["email"]):
+    if not data["email"]:
+        errors["email"] = "Student login email is required."
+    elif not EMAIL_PATTERN.fullmatch(data["email"]):
         errors["email"] = "Enter a valid email address."
+
+    if require_password and not data["password"]:
+        errors["password"] = "An initial password is required."
+    elif data["password"] and len(data["password"]) < 8:
+        errors["password"] = "Password must be at least 8 characters."
 
     for field, label in (("course_id", "Course"), ("semester_id", "Semester")):
         try:
@@ -52,7 +61,7 @@ def validate_student_data(data):
 
 def list_students():
     query = """
-        SELECT s.id, s.register_number, s.full_name, s.email,
+        SELECT s.id, s.user_id, s.register_number, s.full_name, s.email,
                s.face_registered, s.is_active,
                c.code AS course_code, c.name AS course_name,
                sem.semester_number, sem.section, sem.academic_year
@@ -66,7 +75,7 @@ def list_students():
 
 def get_student(student_id):
     query = """
-        SELECT id, register_number, full_name, email, course_id, semester_id,
+        SELECT id, user_id, register_number, full_name, email, course_id, semester_id,
                face_registered, is_active
         FROM students
         WHERE id = %s
@@ -95,48 +104,128 @@ def semester_belongs_to_course(semester_id, course_id):
 
 
 def create_student(data):
-    query = """
-        INSERT INTO students
-            (register_number, full_name, email, course_id, semester_id)
-        VALUES (%s, %s, %s, %s, %s)
-    """
-    return _execute_write(
-        query,
-        (
-            data["register_number"],
-            data["full_name"],
-            data["email"] or None,
-            data["course_id"],
-            data["semester_id"],
-        ),
-    )
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO users (full_name, email, password_hash, role, is_active)
+            VALUES (%s, %s, %s, 'STUDENT', TRUE)
+            """,
+            (data["full_name"], data["email"], hash_password(data["password"])),
+        )
+        user_id = cursor.lastrowid
+        cursor.execute(
+            """
+            INSERT INTO students
+                (user_id, register_number, full_name, email, course_id, semester_id)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (
+                user_id,
+                data["register_number"],
+                data["full_name"],
+                data["email"],
+                data["course_id"],
+                data["semester_id"],
+            ),
+        )
+        student_id = cursor.lastrowid
+        connection.commit()
+        return student_id
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
 
 
 def update_student(student_id, data):
-    query = """
-        UPDATE students
-        SET register_number = %s, full_name = %s, email = %s,
-            course_id = %s, semester_id = %s
-        WHERE id = %s
-    """
-    _execute_write(
-        query,
-        (
-            data["register_number"],
-            data["full_name"],
-            data["email"] or None,
-            data["course_id"],
-            data["semester_id"],
-            student_id,
-        ),
-    )
+    student = get_student(student_id)
+    if student is None:
+        return
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        user_id = student.get("user_id")
+        if user_id:
+            if data["password"]:
+                cursor.execute(
+                    """
+                    UPDATE users
+                    SET full_name = %s, email = %s, password_hash = %s
+                    WHERE id = %s
+                    """,
+                    (
+                        data["full_name"], data["email"],
+                        hash_password(data["password"]), user_id,
+                    ),
+                )
+            else:
+                cursor.execute(
+                    "UPDATE users SET full_name = %s, email = %s WHERE id = %s",
+                    (data["full_name"], data["email"], user_id),
+                )
+        else:
+            cursor.execute(
+                """
+                INSERT INTO users (full_name, email, password_hash, role, is_active)
+                VALUES (%s, %s, %s, 'STUDENT', %s)
+                """,
+                (
+                    data["full_name"], data["email"],
+                    hash_password(data["password"]), bool(student["is_active"]),
+                ),
+            )
+            user_id = cursor.lastrowid
+
+        cursor.execute(
+            """
+            UPDATE students
+            SET user_id = %s, register_number = %s, full_name = %s, email = %s,
+                course_id = %s, semester_id = %s
+            WHERE id = %s
+            """,
+            (
+                user_id, data["register_number"], data["full_name"], data["email"],
+                data["course_id"], data["semester_id"], student_id,
+            ),
+        )
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
 
 
 def set_student_active(student_id, is_active):
-    _execute_write(
-        "UPDATE students SET is_active = %s WHERE id = %s",
-        (bool(is_active), student_id),
-    )
+    student = get_student(student_id)
+    if student is None:
+        return
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            "UPDATE students SET is_active = %s WHERE id = %s",
+            (bool(is_active), student_id),
+        )
+        if student.get("user_id"):
+            cursor.execute(
+                "UPDATE users SET is_active = %s WHERE id = %s",
+                (bool(is_active), student["user_id"]),
+            )
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
 
 
 def _fetch_all(query, params=()):

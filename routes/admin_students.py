@@ -45,7 +45,7 @@ def add_student():
         return render_student_form()
 
     data = student_service.normalize_student_data(request.form)
-    errors = student_service.validate_student_data(data)
+    errors = student_service.validate_student_data(data, require_password=True)
     if not errors and not student_service.semester_belongs_to_course(
         data["semester_id"], data["course_id"]
     ):
@@ -56,15 +56,18 @@ def add_student():
 
     try:
         student_service.create_student(data)
-    except mysql.connector.IntegrityError:
-        errors["register_number"] = "This register number is already in use."
+    except mysql.connector.IntegrityError as exc:
+        if "email" in str(exc).lower():
+            errors["email"] = "This email address is already used by another account."
+        else:
+            errors["register_number"] = "This register number is already in use."
         return render_student_form(data, errors, 409)
     except mysql.connector.Error as exc:
         current_app.logger.error("Could not add student: %s", exc)
         flash("The student could not be saved. Please try again.", "error")
         return render_student_form(data, status=503)
 
-    flash("Student added successfully.", "success")
+    flash("Student and login account added successfully.", "success")
     return redirect(url_for("admin_students.student_list"))
 
 
@@ -79,7 +82,9 @@ def edit_student(student_id):
         return render_student_form(existing_student)
 
     data = student_service.normalize_student_data(request.form)
-    errors = student_service.validate_student_data(data)
+    errors = student_service.validate_student_data(
+        data, require_password=not bool(existing_student.get("user_id"))
+    )
     if not errors and not student_service.semester_belongs_to_course(
         data["semester_id"], data["course_id"]
     ):
@@ -87,18 +92,24 @@ def edit_student(student_id):
 
     if errors:
         data["id"] = student_id
+        data["user_id"] = existing_student.get("user_id")
         return render_student_form(data, errors, 400)
 
     try:
         student_service.update_student(student_id, data)
-    except mysql.connector.IntegrityError:
-        errors["register_number"] = "This register number is already in use."
+    except mysql.connector.IntegrityError as exc:
+        if "email" in str(exc).lower():
+            errors["email"] = "This email address is already used by another account."
+        else:
+            errors["register_number"] = "This register number is already in use."
         data["id"] = student_id
+        data["user_id"] = existing_student.get("user_id")
         return render_student_form(data, errors, 409)
     except mysql.connector.Error as exc:
         current_app.logger.error("Could not update student: %s", exc)
         flash("The student could not be updated. Please try again.", "error")
         data["id"] = student_id
+        data["user_id"] = existing_student.get("user_id")
         return render_student_form(data, status=503)
 
     flash("Student updated successfully.", "success")

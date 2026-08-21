@@ -14,6 +14,7 @@ def form_data(**changes):
         "register_number": "23mca104",
         "full_name": "Test Student",
         "email": "student@example.com",
+        "password": "Student@123",
         "course_id": "1",
         "semester_id": "2",
     }
@@ -42,6 +43,35 @@ def test_valid_student_is_sent_to_service_and_redirected(client, monkeypatch):
     assert response.headers["Location"].endswith("/admin/students")
     assert captured["register_number"] == "23MCA104"
     assert captured["course_id"] == 1
+    assert captured["password"] == "Student@123"
+
+
+@pytest.mark.integration
+def test_student_creation_requires_an_initial_password(client, monkeypatch):
+    login_admin(client)
+    monkeypatch.setattr("services.student_service.get_academic_options", options)
+
+    response = client.post("/admin/students/add", data=form_data(password=""))
+
+    assert response.status_code == 400
+    assert b"initial password is required" in response.data
+
+
+@pytest.mark.integration
+def test_duplicate_student_login_email_is_rejected(client, monkeypatch):
+    login_admin(client)
+    monkeypatch.setattr("services.student_service.semester_belongs_to_course", lambda *args: True)
+    monkeypatch.setattr("services.student_service.get_academic_options", options)
+
+    def duplicate_email(data):
+        raise mysql.connector.IntegrityError("Duplicate entry for key users.email")
+
+    monkeypatch.setattr("services.student_service.create_student", duplicate_email)
+
+    response = client.post("/admin/students/add", data=form_data())
+
+    assert response.status_code == 409
+    assert b"email address is already used" in response.data
 
 
 @pytest.mark.integration

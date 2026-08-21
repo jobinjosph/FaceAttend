@@ -9,7 +9,7 @@
             <div>
                 <span class="section-kicker">Admin · Students</span>
                 <h1>Student management</h1>
-                <p>Add students and prepare their profiles for face registration.</p>
+                <p>Add student login accounts and prepare their profiles for face registration.</p>
             </div>
             <a class="button primary" href="{{ url_for('admin_students.add_student') }}">Add student</a>
         </div>
@@ -31,6 +31,7 @@
                                 <th>Course</th>
                                 <th>Semester</th>
                                 <th>Face</th>
+                                <th>Login</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -51,6 +52,11 @@
                                     <td>
                                         <span class="status-badge {{ 'active' if student.face_registered else 'pending' }}">
                                             {{ 'Registered' if student.face_registered else 'Not registered' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge {{ 'active' if student.user_id else 'pending' }}">
+                                            {{ 'Linked' if student.user_id else 'Not linked' }}
                                         </span>
                                     </td>
                                     <td>

@@ -10,7 +10,7 @@
             <div>
                 <span class="section-kicker">Admin · Students</span>
                 <h1>{{ 'Edit student' if is_edit else 'Add student' }}</h1>
-                <p>Enter the student's academic profile. Face registration comes later.</p>
+                <p>Enter the academic profile and student login details. Face registration comes later.</p>
             </div>
         </div>
 
@@ -36,10 +36,33 @@
                     {% if errors.get('full_name') %}<small class="field-error">{{ errors.full_name }}</small>{% endif %}
                 </div>
 
-                <div class="form-field full-width">
-                    <label for="email">Email address <span>Optional</span></label>
-                    <input id="email" name="email" type="email" value="{{ student.get('email') or '' }}">
+                <div class="form-field">
+                    <label for="email">Student login email</label>
+                    <input id="email" name="email" type="email" value="{{ student.get('email') or '' }}" required>
                     {% if errors.get('email') %}<small class="field-error">{{ errors.email }}</small>{% endif %}
+                </div>
+
+                <div class="form-field">
+                    <label for="password">
+                        {{ 'New password' if is_edit and student.get('user_id') else 'Initial password' }}
+                        {% if is_edit and student.get('user_id') %}<span>Optional</span>{% endif %}
+                    </label>
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        minlength="8"
+                        autocomplete="new-password"
+                        {% if not is_edit or not student.get('user_id') %}required{% endif %}
+                    >
+                    <small>
+                        {% if is_edit and student.get('user_id') %}
+                            Leave blank to keep the current password.
+                        {% else %}
+                            Minimum 8 characters. Give this email and password to the student.
+                        {% endif %}
+                    </small>
+                    {% if errors.get('password') %}<small class="field-error">{{ errors.password }}</small>{% endif %}
                 </div>
 
                 <div class="form-field">

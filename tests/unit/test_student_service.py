@@ -19,6 +19,7 @@ def test_student_data_is_trimmed_and_normalized():
             "register_number": " 23mca104 ",
             "full_name": "  Jobin   Joseph ",
             "email": " JOBIN@EXAMPLE.COM ",
+            "password": "Admin@123",
             "course_id": "1",
             "semester_id": "2",
         }
@@ -28,6 +29,7 @@ def test_student_data_is_trimmed_and_normalized():
         "register_number": "23MCA104",
         "full_name": "Jobin Joseph",
         "email": "jobin@example.com",
+        "password": "Admin@123",
         "course_id": "1",
         "semester_id": "2",
     }
@@ -39,6 +41,7 @@ def test_valid_student_data_converts_identifiers_to_integers():
         "register_number": "23MCA104",
         "full_name": "Jobin Joseph",
         "email": "jobin@example.com",
+        "password": "",
         "course_id": "1",
         "semester_id": "2",
     }
@@ -56,6 +59,7 @@ def test_invalid_student_data_returns_field_errors():
         "register_number": "",
         "full_name": "",
         "email": "invalid-email",
+        "password": "",
         "course_id": "",
         "semester_id": "wrong",
     }
@@ -72,13 +76,31 @@ def test_invalid_student_data_returns_field_errors():
 
 
 @pytest.mark.unit
-def test_student_email_is_optional():
+def test_student_email_and_initial_password_are_required_for_login():
     data = {
         "register_number": "23MCA104",
         "full_name": "Jobin Joseph",
         "email": "",
+        "password": "",
         "course_id": "1",
         "semester_id": "2",
     }
 
-    assert validate_student_data(data) == {}
+    errors = validate_student_data(data, require_password=True)
+
+    assert errors["email"] == "Student login email is required."
+    assert errors["password"] == "An initial password is required."
+
+
+@pytest.mark.unit
+def test_optional_edit_password_must_still_be_long_enough_when_supplied():
+    data = {
+        "register_number": "23MCA104",
+        "full_name": "Jobin Joseph",
+        "email": "jobin@example.com",
+        "password": "short",
+        "course_id": "1",
+        "semester_id": "2",
+    }
+
+    assert validate_student_data(data)["password"] == "Password must be at least 8 characters."

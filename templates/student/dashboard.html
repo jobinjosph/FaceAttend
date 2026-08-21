@@ -4,3 +4,16 @@
 {% set dashboard_message = "Review your subject-wise and period-wise attendance." %}
 
 {% block title %}Student Dashboard | FaceAttend{% endblock %}
+
+{% block dashboard_content %}
+<div class="dashboard-grid">
+    <a class="dashboard-module" href="{{ url_for('student_reports.attendance_report') }}">
+        <span class="dashboard-module-icon">AT</span>
+        <div>
+            <strong>My Attendance</strong>
+            <p>View percentages, subject summaries, entry and exit history, and reports.</p>
+        </div>
+        <span class="arrow">→</span>
+    </a>
+</div>
+{% endblock %}

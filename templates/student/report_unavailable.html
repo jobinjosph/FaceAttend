@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Attendance Unavailable | FaceAttend{% endblock %}
+{% block content %}
+<section class="dashboard-section"><div class="container narrow-container">
+    <div class="empty-state">
+        <strong>Student profile is not linked</strong>
+        <p>Ask the administrator to link this login account to your student profile.</p>
+    </div>
+    <a class="text-link" href="{{ url_for('dashboard.student_dashboard') }}">← Back to Student Dashboard</a>
+</div></section>
+{% endblock %}
