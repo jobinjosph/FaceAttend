@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Report unavailable | FaceAttend{% endblock %}
+{% block content %}
+<section class="dashboard-section"><div class="container narrow-container">
+    <div class="empty-state"><strong>Faculty profile is not linked</strong><p>Ask the administrator to connect this login to an active faculty profile before opening reports.</p><a href="{{ url_for('dashboard.faculty_dashboard') }}">Back to Faculty Dashboard →</a></div>
+</div></section>
+{% endblock %}

@@ -40,6 +40,20 @@ def normalize_filters(values):
     return filters, errors
 
 
+def normalize_cohort_filters(values):
+    filters, errors = normalize_filters(values)
+    filters["student_id"] = None
+    student_id = str(values.get("student_id", "")).strip()
+    if student_id:
+        try:
+            filters["student_id"] = int(student_id)
+            if filters["student_id"] < 1:
+                raise ValueError
+        except ValueError:
+            errors["student_id"] = "Select a valid student."
+    return filters, errors
+
+
 def get_student_report(user_id, filters=None):
     filters = filters or {"subject_id": None, "month": "", "date": ""}
     student = _fetch_one(
@@ -90,6 +104,120 @@ def get_student_report(user_id, filters=None):
         (student["semester_id"],),
     )
     return build_report(student, history, subjects)
+
+
+def get_cohort_report(user_id, role, filters=None):
+    filters = filters or {"student_id": None, "subject_id": None, "month": "", "date": ""}
+    role = str(role).upper()
+    faculty = None
+    scope_clause = ""
+    scope_params = []
+    if role == "FACULTY":
+        faculty = _fetch_one(
+            "SELECT id, employee_code, full_name FROM faculty WHERE user_id=%s AND is_active=TRUE",
+            (user_id,),
+        )
+        if faculty is None:
+            return None
+        scope_clause = " AND ats.faculty_id=%s"
+        scope_params.append(faculty["id"])
+    elif role != "ADMIN":
+        return None
+
+    clauses = ["ats.status='CONFIRMED'"]
+    params = []
+    if filters.get("student_id"):
+        clauses.append("ar.student_id=%s")
+        params.append(filters["student_id"])
+    if filters.get("subject_id"):
+        clauses.append("ats.subject_id=%s")
+        params.append(filters["subject_id"])
+    if filters.get("month"):
+        clauses.append("DATE_FORMAT(ats.session_date, '%Y-%m')=%s")
+        params.append(filters["month"])
+    if filters.get("date"):
+        clauses.append("ats.session_date=%s")
+        params.append(filters["date"])
+    params.extend(scope_params)
+
+    history = _fetch_all(
+        f"""SELECT ar.student_id, st.register_number, st.full_name AS student_name,
+                   ats.session_date, ats.period_number,
+                   TIME_FORMAT(ats.scheduled_start, '%H:%i') AS scheduled_start,
+                   TIME_FORMAT(ats.scheduled_end, '%H:%i') AS scheduled_end,
+                   s.id AS subject_id, s.subject_code, s.subject_name,
+                   f.full_name AS faculty_name, ar.status, ar.first_entry, ar.last_exit,
+                   ar.total_present_seconds, ar.marking_method
+            FROM attendance_records ar
+            JOIN students st ON st.id=ar.student_id
+            JOIN attendance_sessions ats ON ats.id=ar.session_id
+            JOIN subjects s ON s.id=ats.subject_id
+            JOIN faculty f ON f.id=ats.faculty_id
+            WHERE {' AND '.join(clauses)}{scope_clause}
+            ORDER BY ats.session_date DESC, ats.period_number DESC, st.full_name""",
+        tuple(params),
+    )
+
+    if faculty:
+        subjects = _fetch_all(
+            """SELECT DISTINCT s.id, s.subject_code, s.subject_name
+               FROM subjects s JOIN faculty_subject_assignments a ON a.subject_id=s.id
+               WHERE a.faculty_id=%s AND s.is_active=TRUE ORDER BY s.subject_code""",
+            (faculty["id"],),
+        )
+    else:
+        subjects = _fetch_all(
+            "SELECT id, subject_code, subject_name FROM subjects WHERE is_active=TRUE ORDER BY subject_code"
+        )
+    students = _fetch_all(
+        f"""SELECT DISTINCT st.id, st.register_number, st.full_name
+            FROM students st
+            JOIN attendance_records ar ON ar.student_id=st.id
+            JOIN attendance_sessions ats ON ats.id=ar.session_id
+            WHERE st.is_active=TRUE{scope_clause}
+            ORDER BY st.full_name, st.register_number""",
+        tuple(scope_params),
+    )
+    return build_cohort_report(history, students, subjects, faculty)
+
+
+def build_cohort_report(history, available_students=None, available_subjects=None, faculty=None):
+    totals = _empty_totals()
+    grouped = OrderedDict()
+    normalized_history = []
+    for raw_row in history:
+        row = dict(raw_row)
+        row["total_present_seconds"] = int(row.get("total_present_seconds") or 0)
+        row["duration_label"] = format_duration(row["total_present_seconds"])
+        normalized_history.append(row)
+        _count_status(totals, row.get("status"))
+        student_id = row["student_id"]
+        if student_id not in grouped:
+            grouped[student_id] = {
+                "student_id": student_id,
+                "register_number": row["register_number"],
+                "student_name": row["student_name"],
+                **_empty_totals(),
+            }
+        _count_status(grouped[student_id], row.get("status"))
+
+    _finish_totals(totals)
+    students = []
+    for student in grouped.values():
+        _finish_totals(student)
+        student["low_attendance"] = student["percentage"] < LOW_ATTENDANCE_THRESHOLD
+        students.append(student)
+    students.sort(key=lambda row: (not row["low_attendance"], row["student_name"]))
+    return {
+        "summary": totals,
+        "students": students,
+        "history": normalized_history,
+        "available_students": available_students or [],
+        "available_subjects": available_subjects or [],
+        "faculty": faculty,
+        "threshold": LOW_ATTENDANCE_THRESHOLD,
+        "low_attendance_count": sum(1 for row in students if row["low_attendance"]),
+    }
 
 
 def build_report(student, history, available_subjects=None):
