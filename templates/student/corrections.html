@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Attendance Corrections | FaceAttend{% endblock %}
+{% block content %}
+<section class="dashboard-section"><div class="container">
+    <div class="page-heading-row"><div><span class="section-kicker">Student · Attendance</span><h1>Attendance Corrections</h1><p>Choose a confirmed class, request the correct status, and explain what happened.</p></div></div>
+    {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="alert alert-{{ category }}" role="alert">{{ message }}</div>{% endfor %}{% endwith %}
+
+    <form class="student-form-card correction-form" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-grid">
+            <div class="form-field full-width"><label for="attendance_record_id">Attendance record</label><select id="attendance_record_id" name="attendance_record_id" required><option value="">Select a confirmed class</option>{% for record in records %}{% if not record.request_id %}<option value="{{ record.attendance_record_id }}" {{ 'selected' if form_data.attendance_record_id==record.attendance_record_id }}>{{ record.session_date }} · P{{ record.period_number }} · {{ record.subject_code }} — {{ record.subject_name }} · Currently {{ record.current_status|replace('_',' ')|title }}</option>{% endif %}{% endfor %}</select>{% if errors.attendance_record_id %}<small class="field-error">{{ errors.attendance_record_id }}</small>{% endif %}</div>
+            <div class="form-field"><label for="requested_status">Correct status</label><select id="requested_status" name="requested_status" required><option value="">Select status</option>{% for status in statuses %}<option value="{{ status }}" {{ 'selected' if form_data.requested_status==status }}>{{ status|replace('_',' ')|title }}</option>{% endfor %}</select>{% if errors.requested_status %}<small class="field-error">{{ errors.requested_status }}</small>{% endif %}</div>
+            <div class="form-field"><label for="reason">Reason</label><textarea id="reason" name="reason" maxlength="500" required placeholder="Example: Face recognition did not detect me during this class.">{{ form_data.reason or '' }}</textarea>{% if errors.reason %}<small class="field-error">{{ errors.reason }}</small>{% endif %}</div>
+        </div>
+        <div class="form-actions"><button class="button primary" type="submit">Submit correction request</button></div>
+    </form>
+
+    <h2 class="dashboard-section-title">My request history</h2>
+    <div class="table-card">{% if requests %}<div class="table-scroll"><table class="data-table"><thead><tr><th>Class</th><th>Current</th><th>Requested</th><th>Reason</th><th>Status</th><th>Review</th></tr></thead><tbody>{% for item in requests %}<tr><td><strong>{{ item.subject_code }}</strong><small>{{ item.session_date }} · P{{ item.period_number }} · {{ item.subject_name }}</small></td><td>{{ item.current_status|replace('_',' ')|title }}</td><td>{{ item.requested_status|replace('_',' ')|title }}</td><td>{{ item.reason }}</td><td><span class="status-badge {{ item.status|lower }}">{{ item.status|title }}</span><small>Submitted {{ item.created_at }}</small></td><td>{{ item.reviewer_comment or 'Awaiting review' }}{% if item.reviewer_name %}<small>{{ item.reviewer_name }} · {{ item.reviewed_at }}</small>{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state"><strong>No correction requests</strong><p>Your submitted requests and decisions will appear here.</p></div>{% endif %}</div>
+    <a class="text-link" href="{{ url_for('dashboard.student_dashboard') }}">← Back to Student Dashboard</a>
+</div></section>
+{% endblock %}

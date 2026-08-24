@@ -12,6 +12,7 @@ from routes.faculty_sessions import faculty_sessions_bp
 from routes.faculty_attendance import faculty_attendance_bp
 from routes.student_reports import student_reports_bp
 from routes.attendance_reports import attendance_reports_bp
+from routes.correction_requests import correction_requests_bp
 from routes.admin_students import admin_students_bp
 from routes.auth import auth_bp
 from routes.dashboard import dashboard_bp
@@ -42,6 +43,7 @@ def create_app(test_config=None):
     app.register_blueprint(faculty_attendance_bp)
     app.register_blueprint(student_reports_bp)
     app.register_blueprint(attendance_reports_bp)
+    app.register_blueprint(correction_requests_bp)
     register_auth_commands(app)
 
     @app.errorhandler(mysql.connector.Error)
