@@ -4,7 +4,7 @@
 <section class="dashboard-section"><div class="container">
     <div class="page-heading-row">
         <div><span class="section-kicker">Admin · Academic setup</span><h1>MCA Semester 3 subjects</h1><p>Manage the subjects included in the first attendance workflow.</p></div>
-        <a class="button primary" href="{{ url_for('admin_subjects.add_subject') }}">Add subject</a>
+        <a class="apple-shop-button" href="{{ url_for('admin_subjects.add_subject') }}">Add subject</a>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert alert-{{ category }}" role="alert">{{ message }}</div>{% endfor %}{% endwith %}
     <form class="list-filter-form" method="get">
@@ -14,7 +14,7 @@
             <option value="active" {{ 'selected' if status_filter == 'active' }}>Active</option>
             <option value="inactive" {{ 'selected' if status_filter == 'inactive' }}>Inactive</option>
         </select>
-        <button class="button" type="submit">Filter</button>
+        <button class="apple-shop-button apple-shop-button-grey" type="submit">Filter</button>
     </form>
     <div class="table-card">
     {% if subjects %}<div class="table-scroll"><table class="data-table"><thead><tr><th>Code</th><th>Subject</th><th>Type</th><th>Semester</th><th>Status</th><th>Actions</th></tr></thead><tbody>

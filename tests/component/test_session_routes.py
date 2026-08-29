@@ -39,6 +39,7 @@ def test_faculty_sees_own_sessions(client,monkeypatch):
     monkeypatch.setattr("services.session_service.list_faculty_sessions",lambda user_id,day:captured.update(user_id=user_id) or [])
     response=client.get("/faculty/sessions?date=2026-08-24")
     assert response.status_code==200 and captured["user_id"]==7
+    assert b'class="apple-shop-button apple-shop-button-grey"' in response.data
 
 
 @pytest.mark.component

@@ -49,6 +49,7 @@ def test_admin_can_open_empty_student_list(client, monkeypatch):
     response = client.get("/admin/students")
 
     assert response.status_code == 200
+    assert b'<a class="apple-shop-button"' in response.data
     assert b"No students added yet" in response.data
 
 

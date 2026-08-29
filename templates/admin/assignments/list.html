@@ -2,7 +2,7 @@
 {% block title %}Faculty Assignments | FaceAttend{% endblock %}
 {% block content %}
 <section class="dashboard-section"><div class="container">
-    <div class="page-heading-row"><div><span class="section-kicker">Admin · Academic setup</span><h1>Faculty–subject assignments</h1><p>Connect faculty members to the MCA Semester 3 subjects they teach.</p></div><a class="button primary" href="{{ url_for('admin_assignments.add_assignment') }}">Assign faculty</a></div>
+    <div class="page-heading-row"><div><span class="section-kicker">Admin · Academic setup</span><h1>Faculty–subject assignments</h1><p>Connect faculty members to the MCA Semester 3 subjects they teach.</p></div><a class="apple-shop-button" href="{{ url_for('admin_assignments.add_assignment') }}">Assign faculty</a></div>
     {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert alert-{{ category }}" role="alert">{{ message }}</div>{% endfor %}{% endwith %}
     <div class="table-card">
     {% if assignments %}<div class="table-scroll"><table class="data-table"><thead><tr><th>Subject code</th><th>Subject</th><th>Faculty member</th><th>Employee code</th><th>Action</th></tr></thead><tbody>

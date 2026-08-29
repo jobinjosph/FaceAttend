@@ -34,6 +34,7 @@ def test_admin_can_open_empty_faculty_list(client, monkeypatch):
     response = client.get("/admin/faculty")
 
     assert response.status_code == 200
+    assert b'<a class="apple-shop-button"' in response.data
     assert b"No faculty members added yet" in response.data
 
 

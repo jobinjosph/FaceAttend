@@ -27,6 +27,7 @@ def test_admin_can_view_empty_assignment_list(client, monkeypatch):
     monkeypatch.setattr("services.assignment_service.list_assignments", lambda: [])
     response = client.get("/admin/faculty-subjects")
     assert response.status_code == 200
+    assert b'<a class="apple-shop-button"' in response.data
     assert b"No faculty assignments yet" in response.data
 
 

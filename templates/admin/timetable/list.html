@@ -2,7 +2,7 @@
 {% block title %}Semester 3 Timetable | FaceAttend{% endblock %}
 {% block content %}
 <section class="dashboard-section"><div class="container">
-<div class="page-heading-row"><div><span class="section-kicker">Admin · Academic setup</span><h1>MCA Semester 3 timetable</h1><p>Weekly schedule from Monday to Saturday.</p></div><a class="button primary" href="{{ url_for('admin_timetable.add_period') }}">Add period</a></div>
+<div class="page-heading-row"><div><span class="section-kicker">Admin · Academic setup</span><h1>MCA Semester 3 timetable</h1><p>Weekly schedule from Monday to Saturday.</p></div><a class="apple-shop-button" href="{{ url_for('admin_timetable.add_period') }}">Add period</a></div>
 {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert alert-{{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
 <div class="weekly-timetable">
 {% for day_number, day_name in days.items() %}<section class="timetable-day"><h2>{{ day_name }}</h2>
