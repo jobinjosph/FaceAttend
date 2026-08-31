@@ -11,7 +11,7 @@
         <a class="apple-shop-button" href="{{ url_for('student_reports.export_pdf', **filters) }}">Export PDF</a>
     </div></div>
 
-    <form class="report-filter-card" method="get">
+    <form class="report-filter-card student-report-filters" method="get">
         <div class="form-field"><label for="subject_id">Subject</label><select id="subject_id" name="subject_id"><option value="">All subjects</option>{% for subject in report.available_subjects %}<option value="{{ subject.id }}" {{ 'selected' if filters.subject_id==subject.id }}>{{ subject.subject_code }} — {{ subject.subject_name }}</option>{% endfor %}</select>{% if errors.subject_id %}<small class="field-error">{{ errors.subject_id }}</small>{% endif %}</div>
         <div class="form-field"><label for="month">Month</label><select id="month" name="month"><option value="">All months</option>{% for option in month_options %}<option value="{{ option.value }}" {{ 'selected' if filters.month==option.value }}>{{ option.label }}</option>{% endfor %}</select>{% if errors.month %}<small class="field-error">{{ errors.month }}</small>{% endif %}</div>
         <div class="form-field"><label for="date">Exact date</label><input id="date" name="date" type="date" value="{{ filters.date }}">{% if errors.date %}<small class="field-error">{{ errors.date }}</small>{% endif %}</div>

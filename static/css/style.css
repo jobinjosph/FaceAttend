@@ -1869,8 +1869,14 @@ a {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.student-report-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+}
+
 .cohort-report-filters .form-field select,
-.cohort-report-filters .form-field input {
+.cohort-report-filters .form-field input,
+.student-report-filters .form-field select,
+.student-report-filters .form-field input {
     height: 49px;
     min-height: 49px;
 }
@@ -1963,13 +1969,15 @@ a {
 }
 
 @media (max-width: 1000px) {
-    .cohort-report-filters {
+    .cohort-report-filters,
+    .student-report-filters {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 640px) {
-    .cohort-report-filters {
+    .cohort-report-filters,
+    .student-report-filters {
         grid-template-columns: 1fr;
     }
 
