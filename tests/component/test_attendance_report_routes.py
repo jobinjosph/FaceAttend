@@ -42,6 +42,7 @@ def test_staff_report_displays_filters_shortage_and_history(client, monkeypatch,
     assert response.status_code == 200
     assert b'class="apple-shop-button"' in response.data
     assert b'class="apple-shop-button apple-shop-button-grey"' in response.data
+    assert b'>Clear</a>' in response.data
     assert b"Attendance Reports" in response.data
     assert b"All students" in response.data and b"All subjects" in response.data
     assert b"Below 75%" in response.data

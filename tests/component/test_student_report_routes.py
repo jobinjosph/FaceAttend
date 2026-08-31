@@ -39,6 +39,7 @@ def test_student_report_displays_summary_warning_and_history(client, monkeypatch
     assert response.status_code == 200
     assert b'class="apple-shop-button"' in response.data
     assert b'class="apple-shop-button apple-shop-button-grey"' in response.data
+    assert b'>Clear</a>' in response.data
     assert b"50.0%" in response.data
     assert b"Attendance warning" in response.data
     assert b"Cloud Computing" in response.data
