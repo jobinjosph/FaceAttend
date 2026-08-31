@@ -1919,10 +1919,12 @@ a {
 
 .correction-reason-field {
     grid-area: reason;
+    grid-template-rows: auto 1fr;
+    align-self: stretch;
 }
 
 .correction-reason-field textarea {
-    height: 100%;
+    height: auto;
     min-height: 174px;
 }
 
