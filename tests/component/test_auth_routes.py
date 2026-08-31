@@ -80,12 +80,15 @@ def test_roles_can_only_access_their_own_dashboard(
     with client.session_transaction() as user_session:
         user_session["user_id"] = 10
         user_session["full_name"] = "Role Test User"
+        user_session["email"] = "role.user@example.com"
         user_session["role"] = role
 
     allowed_response = client.get(allowed_path)
     assert allowed_response.status_code == 200
     assert b'class="account-menu"' in allowed_response.data
     assert b"Role Test User" in allowed_response.data
+    assert b"role.user@example.com" in allowed_response.data
+    assert f"{role.title()} account".encode() in allowed_response.data
     assert b'class="account-logout"' in allowed_response.data
     for path in forbidden_paths:
         assert client.get(path).status_code == 403

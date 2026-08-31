@@ -6,7 +6,7 @@
     <meta name="description" content="FaceAttend - smart period-based student attendance using face recognition.">
     <title>{% block title %}FaceAttend{% endblock %}</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='14') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='15') }}">
 </head>
 <body>
     <header class="site-header">
@@ -56,9 +56,10 @@
                             <div class="account-menu-panel">
                                 <div class="account-menu-identity">
                                     <span class="account-avatar account-avatar-large" aria-hidden="true">{{ session.get('full_name', 'User')[0]|upper }}</span>
-                                    <span>
+                                    <span class="account-identity-text">
                                         <strong>{{ session.get('full_name', 'User') }}</strong>
-                                        <small>{{ session.get('role', 'User')|title }}</small>
+                                        <small class="account-role">{{ session.get('role', 'User')|title }} account</small>
+                                        <small class="account-email" title="{{ session.get('email', '') }}">{{ session.get('email', 'Email unavailable') }}</small>
                                     </span>
                                 </div>
                                 <form method="post" action="{{ url_for('auth.logout') }}">

@@ -222,7 +222,7 @@ a {
     z-index: 20;
     top: calc(100% + 14px);
     right: 0;
-    width: 280px;
+    width: 320px;
     overflow: hidden;
     border: 1px solid var(--line);
     border-radius: 18px;
@@ -247,6 +247,10 @@ a {
     font-size: 1rem;
 }
 
+.account-identity-text {
+    min-width: 0;
+}
+
 .account-menu-identity strong,
 .account-menu-identity small {
     display: block;
@@ -263,6 +267,16 @@ a {
     margin-top: 3px;
     color: var(--ink-500);
     font-size: .75rem;
+}
+
+.account-menu-identity .account-email {
+    overflow: hidden;
+    max-width: 220px;
+    margin-top: 5px;
+    color: var(--ink-700);
+    font-size: .78rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .account-logout {
