@@ -1926,6 +1926,10 @@ a {
 .correction-reason-field textarea {
     height: auto;
     min-height: 174px;
+    padding: 13px;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
 }
 
 .correction-submit-actions {
