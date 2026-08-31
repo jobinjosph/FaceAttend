@@ -48,6 +48,15 @@ def test_report_filters_are_normalized_and_invalid_values_rejected():
 
 
 @pytest.mark.unit
+def test_month_options_list_all_twelve_months_for_selected_year():
+    options = report_service.get_month_options({"month": "2026-08"})
+
+    assert len(options) == 12
+    assert options[0] == {"value": "2026-01", "label": "January"}
+    assert options[-1] == {"value": "2026-12", "label": "December"}
+
+
+@pytest.mark.unit
 def test_duration_format_supports_minutes_and_hours():
     assert report_service.format_duration(125) == "2m 5s"
     assert report_service.format_duration(3720) == "1h 2m"

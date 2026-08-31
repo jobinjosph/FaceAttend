@@ -18,7 +18,8 @@ def attendance_report():
     if report is None:
         return render_template("student/report_unavailable.html"), 404
     return render_template(
-        "student/attendance_report.html", report=report, filters=filters, errors=errors
+        "student/attendance_report.html", report=report, filters=filters, errors=errors,
+        month_options=report_service.get_month_options(filters),
     ), 400 if errors else 200
 
 

@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from calendar import month_name
 from datetime import datetime
 
 from db import get_db_connection
@@ -6,6 +7,19 @@ from db import get_db_connection
 
 ATTENDED_STATUSES = {"PRESENT", "LATE", "LEFT_EARLY", "ON_DUTY", "MEDICAL"}
 LOW_ATTENDANCE_THRESHOLD = 75.0
+
+
+def get_month_options(filters=None, current_year=None):
+    filters = filters or {}
+    selected_period = filters.get("month") or str(filters.get("date", ""))[:7]
+    try:
+        year = int(selected_period[:4]) if selected_period else int(current_year or datetime.now().year)
+    except (TypeError, ValueError):
+        year = int(current_year or datetime.now().year)
+    return [
+        {"value": f"{year}-{month:02d}", "label": month_name[month]}
+        for month in range(1, 13)
+    ]
 
 
 def normalize_filters(values):

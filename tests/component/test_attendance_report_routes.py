@@ -45,6 +45,7 @@ def test_staff_report_displays_filters_shortage_and_history(client, monkeypatch,
     assert b'>Clear</a>' in response.data
     assert b"Attendance Reports" in response.data
     assert b"All students" in response.data and b"All subjects" in response.data
+    assert b"All months" in response.data and b"January" in response.data and b"December" in response.data
     assert b"Below 75%" in response.data
     assert b"47m 0s" in response.data
 

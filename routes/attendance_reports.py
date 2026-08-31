@@ -20,6 +20,7 @@ def attendance_report():
     return render_template(
         "reports/attendance_report.html", report=report, filters=filters, errors=errors,
         dashboard_endpoint=_dashboard_endpoint(),
+        month_options=report_service.get_month_options(filters),
     ), 400 if errors else 200
 
 
