@@ -1889,6 +1889,47 @@ a {
     margin-top: 30px;
 }
 
+.correction-form .form-grid {
+    grid-template-areas:
+        "record reason"
+        "status reason";
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 26px;
+}
+
+.correction-form .correction-record-field {
+    grid-area: record;
+    grid-column: auto;
+}
+
+.correction-record-field select {
+    height: 58px;
+    min-height: 58px;
+    font-size: 1rem;
+}
+
+.correction-status-field {
+    grid-area: status;
+}
+
+.correction-status-field select {
+    height: 58px;
+    min-height: 58px;
+}
+
+.correction-reason-field {
+    grid-area: reason;
+}
+
+.correction-reason-field textarea {
+    height: 100%;
+    min-height: 174px;
+}
+
+.correction-submit-actions {
+    margin-top: 24px;
+}
+
 .correction-form textarea,
 .correction-review-card textarea {
     min-height: 110px;
@@ -1978,6 +2019,14 @@ a {
 @media (max-width: 640px) {
     .cohort-report-filters,
     .student-report-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .correction-form .form-grid {
+        grid-template-areas:
+            "record"
+            "status"
+            "reason";
         grid-template-columns: 1fr;
     }
 
