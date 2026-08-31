@@ -1267,6 +1267,20 @@ a {
     gap: 12px;
 }
 
+.data-table td.table-actions {
+    display: table-cell;
+    white-space: nowrap;
+}
+
+.data-table td.table-actions > * {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.data-table td.table-actions > * + * {
+    margin-left: 12px;
+}
+
 .table-actions a,
 .table-actions button,
 .text-link,
