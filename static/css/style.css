@@ -1869,6 +1869,12 @@ a {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.cohort-report-filters .form-field select,
+.cohort-report-filters .form-field input {
+    height: 49px;
+    min-height: 49px;
+}
+
 .low-attendance-row {
     background: #fff7f7;
 }
