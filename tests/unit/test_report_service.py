@@ -31,6 +31,9 @@ def test_report_calculates_overall_and_subject_percentages():
     assert report["subjects"][0]["percentage"] == 66.7
     assert report["subjects"][0]["low_attendance"] is True
     assert report["history"][0]["duration_label"] == "47m 0s"
+    assert report["months"][0]["name"] == "August"
+    assert report["months"][0]["subjects"][0]["percentage"] == 66.7
+    assert report["dates"][0]["label"] == "20 August 2026"
 
 
 @pytest.mark.unit

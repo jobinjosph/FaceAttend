@@ -14,11 +14,14 @@ student_reports_bp = Blueprint("student_reports", __name__, url_prefix="/student
 @role_required("STUDENT")
 def attendance_report():
     filters, errors = report_service.normalize_filters(request.args)
+    view = request.args.get("view", "semester").strip().lower()
+    if view not in {"semester", "month", "date"}:
+        view = "semester"
     report = report_service.get_student_report(session["user_id"], filters)
     if report is None:
         return render_template("student/report_unavailable.html"), 404
     return render_template(
-        "student/attendance_report.html", report=report, filters=filters, errors=errors,
+        "student/attendance_report.html", report=report, filters=filters, errors=errors, view=view,
         month_options=report_service.get_month_options(filters),
     ), 400 if errors else 200
 

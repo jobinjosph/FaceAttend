@@ -263,15 +263,71 @@ def build_report(student, history, available_subjects=None):
         subject["low_attendance"] = subject["percentage"] < LOW_ATTENDANCE_THRESHOLD
         subject_summaries.append(subject)
 
+    months = _build_month_summaries(normalized_history)
+    dates = _build_date_groups(normalized_history)
+
     return {
         "student": student,
         "summary": totals,
         "subjects": subject_summaries,
         "history": normalized_history,
+        "months": months,
+        "dates": dates,
         "available_subjects": available_subjects or [],
         "threshold": LOW_ATTENDANCE_THRESHOLD,
         "low_attendance": bool(totals["total"] and totals["percentage"] < LOW_ATTENDANCE_THRESHOLD),
     }
+
+
+def _build_month_summaries(history):
+    grouped = OrderedDict()
+    for row in history:
+        session_date = row["session_date"]
+        month_key = session_date.strftime("%Y-%m")
+        if month_key not in grouped:
+            grouped[month_key] = {
+                "value": month_key,
+                "year": session_date.year,
+                "name": month_name[session_date.month],
+                "subjects": OrderedDict(),
+                **_empty_totals(),
+            }
+        month = grouped[month_key]
+        _count_status(month, row.get("status"))
+        subject_id = row["subject_id"]
+        if subject_id not in month["subjects"]:
+            month["subjects"][subject_id] = {
+                "subject_code": row["subject_code"],
+                "subject_name": row["subject_name"],
+                **_empty_totals(),
+            }
+        _count_status(month["subjects"][subject_id], row.get("status"))
+
+    summaries = []
+    for month in grouped.values():
+        _finish_totals(month)
+        subject_summaries = []
+        for subject in month["subjects"].values():
+            _finish_totals(subject)
+            subject_summaries.append(subject)
+        month["subjects"] = subject_summaries
+        summaries.append(month)
+    return summaries
+
+
+def _build_date_groups(history):
+    grouped = OrderedDict()
+    for row in history:
+        session_date = row["session_date"]
+        key = session_date.isoformat()
+        if key not in grouped:
+            grouped[key] = {
+                "value": key,
+                "label": session_date.strftime("%d %B %Y"),
+                "rows": [],
+            }
+        grouped[key]["rows"].append(row)
+    return list(grouped.values())
 
 
 def format_duration(seconds):

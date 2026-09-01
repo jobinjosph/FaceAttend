@@ -15,8 +15,9 @@ def test_student_opens_dashboard_views_report_and_exports_it(client, monkeypatch
 
     report = client.get("/student/attendance")
     assert report.status_code == 200
-    assert b"Subject-wise attendance" in report.data
-    assert b"Attendance history" in report.data
+    assert b"Semester View" in report.data
+    assert b"Month View" in report.data
+    assert b"Overall attendance" in report.data
     assert b"Cloud Computing" in report.data
 
     export = client.get("/student/attendance/export.csv")

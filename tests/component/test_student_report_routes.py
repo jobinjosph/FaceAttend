@@ -9,11 +9,14 @@ def login(client, role="STUDENT"):
 
 
 def sample_report():
+    history = [{"session_date": date(2026, 8, 20), "period_number": 1, "scheduled_start": "10:00", "scheduled_end": "10:50", "subject_code": "CC431", "subject_name": "Cloud Computing", "faculty_name": "Dr. Faculty", "status": "PRESENT", "first_entry": datetime(2026, 8, 20, 10, 1), "last_exit": datetime(2026, 8, 20, 10, 48), "duration_label": "47m 0s", "marking_method": "FACE"}]
     return {
         "student": {"id": 3, "register_number": "25MCA03", "full_name": "Test Student", "course_code": "MCA", "semester_number": 3},
         "summary": {"percentage": 50.0, "total": 2, "attended": 1, "present": 1, "absent": 1, "late": 0, "left_early": 0, "on_duty": 0, "medical": 0},
         "subjects": [{"subject_id": 1, "subject_code": "CC431", "subject_name": "Cloud Computing", "percentage": 50.0, "attended": 1, "total": 2, "low_attendance": True}],
-        "history": [{"session_date": date(2026, 8, 20), "period_number": 1, "scheduled_start": "10:00", "scheduled_end": "10:50", "subject_code": "CC431", "subject_name": "Cloud Computing", "faculty_name": "Dr. Faculty", "status": "PRESENT", "first_entry": datetime(2026, 8, 20, 10, 1), "last_exit": datetime(2026, 8, 20, 10, 48), "duration_label": "47m 0s", "marking_method": "FACE"}],
+        "history": history,
+        "months": [{"value": "2026-08", "year": 2026, "name": "August", "percentage": 50.0, "total": 2, "attended": 1, "absent": 1, "on_duty": 0, "medical": 0, "subjects": [{"subject_name": "Cloud Computing", "percentage": 50.0}]}],
+        "dates": [{"value": "2026-08-20", "label": "20 August 2026", "rows": history}],
         "available_subjects": [{"id": 1, "subject_code": "CC431", "subject_name": "Cloud Computing"}],
         "threshold": 75.0, "low_attendance": True,
     }
@@ -43,8 +46,12 @@ def test_student_report_displays_summary_warning_and_history(client, monkeypatch
     assert b"50.0%" in response.data
     assert b"Attendance warning" in response.data
     assert b"Cloud Computing" in response.data
-    assert b"All months" in response.data and b"January" in response.data and b"December" in response.data
-    assert b"47m 0s" in response.data
+    assert b"Semester View" in response.data and b"Month View" in response.data and b"Date View" in response.data
+    month_response = client.get("/student/attendance?view=month")
+    assert b"All months" in month_response.data and b"January" in month_response.data and b"December" in month_response.data
+    assert b"August" in month_response.data
+    date_response = client.get("/student/attendance?view=date")
+    assert b"20 August 2026" in date_response.data and b"10:00" in date_response.data
     assert b"Export CSV" in response.data and b"Export PDF" in response.data
 
 
