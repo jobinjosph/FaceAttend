@@ -237,6 +237,12 @@ a {
     gap: 13px;
     padding: 20px;
     border-bottom: 1px solid var(--line);
+    color: var(--ink-900);
+}
+
+.account-menu-identity:hover,
+.account-menu-identity:focus-visible {
+    background: var(--surface-soft);
 }
 
 .account-avatar-large {
