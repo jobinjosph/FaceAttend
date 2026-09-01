@@ -47,6 +47,7 @@ def test_student_report_displays_summary_warning_and_history(client, monkeypatch
     assert b"Attendance warning" in response.data
     assert b"Cloud Computing" in response.data
     assert b"Semester View" in response.data and b"Month View" in response.data and b"Date View" in response.data
+    assert b"Semester 1" in response.data and b"Semester 4" in response.data
     month_response = client.get("/student/attendance?view=month")
     assert b"All months" in month_response.data and b"January" in month_response.data and b"December" in month_response.data
     assert b"August" in month_response.data

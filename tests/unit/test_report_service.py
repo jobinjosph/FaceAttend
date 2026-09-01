@@ -38,16 +38,16 @@ def test_report_calculates_overall_and_subject_percentages():
 
 @pytest.mark.unit
 def test_report_filters_are_normalized_and_invalid_values_rejected():
-    filters, errors = report_service.normalize_filters(
-        {"subject_id": "7", "month": "2026-08", "date": "2026-08-22"}
+    filters, errors = report_service.normalize_student_filters(
+        {"subject_id": "7", "month": "2026-08", "date": "2026-08-22", "semester": "2"}
     )
     assert errors == {}
-    assert filters == {"subject_id": 7, "month": "2026-08", "date": "2026-08-22"}
+    assert filters == {"subject_id": 7, "month": "2026-08", "date": "2026-08-22", "semester": 2}
 
-    _, errors = report_service.normalize_filters(
-        {"subject_id": "bad", "month": "2026-13", "date": "not-a-date"}
+    _, errors = report_service.normalize_student_filters(
+        {"subject_id": "bad", "month": "2026-13", "date": "not-a-date", "semester": "5"}
     )
-    assert set(errors) == {"subject_id", "month", "date"}
+    assert set(errors) == {"subject_id", "month", "date", "semester"}
 
 
 @pytest.mark.unit

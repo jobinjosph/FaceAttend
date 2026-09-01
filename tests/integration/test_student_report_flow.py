@@ -15,9 +15,9 @@ def test_report_filters_are_passed_to_service(client, monkeypatch):
         "services.report_service.get_student_report",
         lambda user_id, filters: captured.update(user=user_id, filters=filters) or sample_report(),
     )
-    response = client.get("/student/attendance?subject_id=1&month=2026-08&date=2026-08-20")
+    response = client.get("/student/attendance?subject_id=1&month=2026-08&date=2026-08-20&semester=2")
     assert response.status_code == 200
-    assert captured == {"user": 9, "filters": {"subject_id": 1, "month": "2026-08", "date": "2026-08-20"}}
+    assert captured == {"user": 9, "filters": {"subject_id": 1, "month": "2026-08", "date": "2026-08-20", "semester": 2}}
 
 
 @pytest.mark.integration

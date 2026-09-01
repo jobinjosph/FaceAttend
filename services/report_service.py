@@ -54,6 +54,20 @@ def normalize_filters(values):
     return filters, errors
 
 
+def normalize_student_filters(values):
+    filters, errors = normalize_filters(values)
+    filters["semester"] = None
+    semester = str(values.get("semester", "")).strip()
+    if semester:
+        try:
+            filters["semester"] = int(semester)
+            if filters["semester"] not in range(1, 5):
+                raise ValueError
+        except ValueError:
+            errors["semester"] = "Select a valid semester."
+    return filters, errors
+
+
 def normalize_cohort_filters(values):
     filters, errors = normalize_filters(values)
     filters["student_id"] = None
@@ -69,9 +83,9 @@ def normalize_cohort_filters(values):
 
 
 def get_student_report(user_id, filters=None):
-    filters = filters or {"subject_id": None, "month": "", "date": ""}
+    filters = filters or {"subject_id": None, "month": "", "date": "", "semester": None}
     student = _fetch_one(
-        """SELECT st.id, st.register_number, st.full_name, st.semester_id,
+        """SELECT st.id, st.register_number, st.full_name, st.course_id, st.semester_id,
                   c.code AS course_code, c.name AS course_name,
                   sem.semester_number, sem.section, sem.academic_year
            FROM students st
@@ -83,8 +97,22 @@ def get_student_report(user_id, filters=None):
     if student is None:
         return None
 
+    selected_semester = filters.get("semester") or student["semester_number"]
+    target_semester = {"id": student["semester_id"]}
+    if selected_semester != student["semester_number"]:
+        target_semester = _fetch_one(
+            """SELECT id FROM semesters
+               WHERE course_id=%s AND semester_number=%s
+               ORDER BY academic_year DESC, section LIMIT 1""",
+            (student["course_id"], selected_semester),
+        )
+    student = dict(student)
+    student["semester_number"] = selected_semester
+    if target_semester is None:
+        return build_report(student, [], [])
+
     clauses = ["ar.student_id=%s", "ats.semester_id=%s", "ats.status='CONFIRMED'"]
-    params = [student["id"], student["semester_id"]]
+    params = [student["id"], target_semester["id"]]
     if filters.get("subject_id"):
         clauses.append("ats.subject_id=%s")
         params.append(filters["subject_id"])
@@ -115,7 +143,7 @@ def get_student_report(user_id, filters=None):
         """SELECT id, subject_code, subject_name FROM subjects
            WHERE semester_id=%s AND is_active=TRUE
            ORDER BY subject_code""",
-        (student["semester_id"],),
+        (target_semester["id"],),
     )
     return build_report(student, history, subjects)
 

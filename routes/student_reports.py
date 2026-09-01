@@ -13,7 +13,7 @@ student_reports_bp = Blueprint("student_reports", __name__, url_prefix="/student
 @student_reports_bp.get("")
 @role_required("STUDENT")
 def attendance_report():
-    filters, errors = report_service.normalize_filters(request.args)
+    filters, errors = report_service.normalize_student_filters(request.args)
     view = request.args.get("view", "semester").strip().lower()
     if view not in {"semester", "month", "date"}:
         view = "semester"
@@ -84,7 +84,7 @@ def export_pdf():
 
 
 def _load_export_report():
-    filters, errors = report_service.normalize_filters(request.args)
+    filters, errors = report_service.normalize_student_filters(request.args)
     if errors:
         abort(400)
     report = report_service.get_student_report(session["user_id"], filters)
