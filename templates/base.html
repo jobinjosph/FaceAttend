@@ -45,8 +45,8 @@
 
                 <div class="nav-links">
                     <a class="active" href="{{ url_for('main.home') }}">Home</a>
-                    <a href="#features">Features</a>
-                    <a href="#workflow">Workflow</a>
+                    <a href="{{ url_for('main.home') }}#features">Features</a>
+                    <a href="{{ url_for('main.home') }}#workflow">Workflow</a>
                     <a href="{{ attendance_portal_url }}">Attendance Portal</a>
                     {% if session.get('user_id') %}
                         <details class="account-menu">

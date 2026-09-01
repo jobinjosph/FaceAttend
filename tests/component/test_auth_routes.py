@@ -91,6 +91,8 @@ def test_roles_can_only_access_their_own_dashboard(
     assert f"{role.title()} account".encode() in allowed_response.data
     assert f'class="account-menu-identity" href="{allowed_path}"'.encode() in allowed_response.data
     assert f'href="{allowed_path}">Attendance Portal</a>'.encode() in allowed_response.data
+    assert b'href="/#features">Features</a>' in allowed_response.data
+    assert b'href="/#workflow">Workflow</a>' in allowed_response.data
     assert b'class="account-logout"' in allowed_response.data
     for path in forbidden_paths:
         assert client.get(path).status_code == 403
