@@ -43,9 +43,9 @@ def get_mca_semester_three():
     )
 
 
-def list_semester_three_subjects(search="", status="all"):
-    conditions = ["c.code = 'MCA'", "sem.semester_number = 3"]
-    params = []
+def list_semester_three_subjects(search="", status="all", semester_id=None):
+    conditions = (["sem.id=%s"] if semester_id else ["c.code = 'MCA'", "sem.semester_number = 3"])
+    params = [semester_id] if semester_id else []
     if search:
         conditions.append("(s.subject_code LIKE %s OR s.subject_name LIKE %s)")
         term = f"%{search}%"
@@ -70,7 +70,7 @@ def list_semester_three_subjects(search="", status="all"):
     )
 
 
-def get_subject(subject_id):
+def get_subject(subject_id, semester_id=None):
     return _fetch_one(
         """
         SELECT s.id, s.subject_code, s.subject_name, s.activity_type, s.is_active,
@@ -78,9 +78,9 @@ def get_subject(subject_id):
         FROM subjects s
         JOIN semesters sem ON sem.id = s.semester_id
         JOIN courses c ON c.id = sem.course_id
-        WHERE s.id = %s AND c.code = 'MCA' AND sem.semester_number = 3
+        WHERE s.id=%s AND ((%s IS NULL AND c.code='MCA' AND sem.semester_number=3) OR sem.id=%s)
         """,
-        (subject_id,),
+        (subject_id, semester_id, semester_id),
     )
 
 
