@@ -20,7 +20,7 @@ def validate_assignment_data(data):
     return errors
 
 
-def list_assignments():
+def list_assignments(semester_id=None):
     return _fetch_all(
         """
         SELECT a.id, s.id AS subject_id, s.subject_code, s.subject_name,
@@ -30,22 +30,25 @@ def list_assignments():
         JOIN semesters sem ON sem.id = s.semester_id
         JOIN courses c ON c.id = sem.course_id
         JOIN faculty f ON f.id = a.faculty_id
-        WHERE c.code = 'MCA' AND sem.semester_number = 3
+        WHERE ((%s IS NULL AND c.code = 'MCA' AND sem.semester_number = 3) OR sem.id = %s)
         ORDER BY s.subject_code, f.full_name
-        """
+        """,
+        (semester_id, semester_id),
     )
 
 
-def get_assignment_options():
+def get_assignment_options(semester_id=None):
     subjects = _fetch_all(
         """
         SELECT s.id, s.subject_code, s.subject_name
         FROM subjects s
         JOIN semesters sem ON sem.id = s.semester_id
         JOIN courses c ON c.id = sem.course_id
-        WHERE c.code = 'MCA' AND sem.semester_number = 3 AND s.is_active = TRUE
+        WHERE ((%s IS NULL AND c.code = 'MCA' AND sem.semester_number = 3) OR sem.id = %s)
+          AND s.is_active = TRUE
         ORDER BY s.subject_code
-        """
+        """,
+        (semester_id, semester_id),
     )
     faculty = _fetch_all(
         """
@@ -58,7 +61,7 @@ def get_assignment_options():
     return subjects, faculty
 
 
-def active_subject_exists(subject_id):
+def active_subject_exists(subject_id, semester_id=None):
     return _fetch_one(
         """
         SELECT s.id
@@ -66,9 +69,9 @@ def active_subject_exists(subject_id):
         JOIN semesters sem ON sem.id = s.semester_id
         JOIN courses c ON c.id = sem.course_id
         WHERE s.id = %s AND s.is_active = TRUE
-          AND c.code = 'MCA' AND sem.semester_number = 3
+          AND ((%s IS NULL AND c.code = 'MCA' AND sem.semester_number = 3) OR sem.id = %s)
         """,
-        (subject_id,),
+        (subject_id, semester_id, semester_id),
     ) is not None
 
 
@@ -97,10 +100,13 @@ def create_assignment(data):
         connection.close()
 
 
-def get_assignment(assignment_id):
+def get_assignment(assignment_id, semester_id=None):
     return _fetch_one(
-        "SELECT id, subject_id, faculty_id FROM faculty_subject_assignments WHERE id = %s",
-        (assignment_id,),
+        """SELECT a.id, a.subject_id, a.faculty_id, s.semester_id
+           FROM faculty_subject_assignments a
+           JOIN subjects s ON s.id = a.subject_id
+           WHERE a.id = %s AND (%s IS NULL OR s.semester_id = %s)""",
+        (assignment_id, semester_id, semester_id),
     )
 
 
