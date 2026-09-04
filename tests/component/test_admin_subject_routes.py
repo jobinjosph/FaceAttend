@@ -35,7 +35,8 @@ def test_admin_can_list_semester_three_subjects(client, monkeypatch):
     assert b'<a class="apple-shop-button"' in response.data
     assert b'class="apple-shop-button apple-shop-button-grey"' in response.data
     assert b"Cloud Computing" in response.data
-    assert b"MCA Semester 3" in response.data
+    assert b"Manage Subjects" in response.data
+    assert b"Manage subjects across programmes, semesters, and sections." in response.data
 
 
 @pytest.mark.component
