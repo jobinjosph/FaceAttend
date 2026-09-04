@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% set is_edit = cohort.id is defined %}
+{% block title %}{{ 'Edit' if is_edit else 'Add' }} Semester Group | FaceAttend{% endblock %}
+{% block content %}
+<section class="dashboard-section"><div class="narrow-container">
+    <div class="page-heading-row"><div><span class="section-kicker">Admin · {{ programme.code }}</span><h1>{{ 'Edit semester group' if is_edit else 'Add semester group' }}</h1><p>Configure an academic year, semester and section for {{ programme.name }}.</p></div></div>
+    <form method="post" class="student-form-card" {% if is_edit %}data-confirm-edit="This changes how connected academic records are identified. No records will be deleted. Continue?"{% endif %}><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="form-grid">
+        <div class="form-field"><label for="academic_year">Academic year</label><input id="academic_year" name="academic_year" placeholder="2026-27" value="{{ cohort.academic_year|default('') }}" maxlength="7" required>{% if errors.academic_year %}<small class="field-error">{{ errors.academic_year }}</small>{% endif %}</div>
+        <div class="form-field"><label for="semester_number">Semester</label><select id="semester_number" name="semester_number" required><option value="">Select semester</option>{% for number in range(1, programme.total_semesters + 1) %}<option value="{{ number }}" {{ 'selected' if cohort.semester_number==number }}>Semester {{ number }}</option>{% endfor %}</select>{% if errors.semester_number %}<small class="field-error">{{ errors.semester_number }}</small>{% endif %}</div>
+        <div class="form-field full-width"><label for="section">Section</label><input id="section" name="section" placeholder="A" value="{{ cohort.section|default('') }}" maxlength="20" required>{% if errors.section %}<small class="field-error">{{ errors.section }}</small>{% endif %}</div>
+    </div><div class="form-actions"><a class="button cancel-button" href="{{ url_for('admin_programmes.cohort_list', programme_id=programme.id) }}">Cancel</a><button class="button primary form-submit" type="submit">{{ 'Save changes' if is_edit else 'Add semester group' }}</button></div></form>
+</div></section>
+{% endblock %}

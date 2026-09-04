@@ -2093,6 +2093,41 @@ a {
     grid-column: 1 / -1;
 }
 
+.danger-text-button {
+    color: #b42333 !important;
+}
+
+.confirmation-dialog {
+    width: min(520px, calc(100% - 32px));
+    padding: 28px;
+    border: 0;
+    border-radius: 22px;
+    color: var(--ink-900);
+    box-shadow: 0 24px 70px rgba(15, 35, 58, 0.28);
+}
+
+.confirmation-dialog::backdrop {
+    background: rgba(7, 25, 43, 0.58);
+}
+
+.confirmation-dialog h2 {
+    margin-top: 0;
+}
+
+.confirmation-dialog label {
+    display: block;
+    margin: 20px 0 8px;
+    font-weight: 700;
+}
+
+.confirmation-dialog input {
+    width: 100%;
+}
+
+.confirmation-dialog .form-actions {
+    margin-top: 24px;
+}
+
 @media (max-width: 1000px) {
     .cohort-report-filters,
     .student-report-filters {

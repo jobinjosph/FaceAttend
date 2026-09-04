@@ -7,6 +7,15 @@
 
 {% block dashboard_content %}
 <div class="dashboard-grid">
+    <a class="dashboard-module" href="{{ url_for('admin_programmes.programme_list') }}">
+        <span class="dashboard-module-icon">AC</span>
+        <div>
+            <strong>Academic Structure</strong>
+            <p>Add, edit and archive college programmes safely.</p>
+        </div>
+        <span class="arrow">→</span>
+    </a>
+
     <a class="dashboard-module" href="{{ url_for('admin_students.student_list') }}">
         <span class="dashboard-module-icon">ST</span>
         <div>

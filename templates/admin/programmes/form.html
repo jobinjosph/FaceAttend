@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% set is_edit = programme.id is defined %}
+{% block title %}{{ 'Edit' if is_edit else 'Add' }} Programme | FaceAttend{% endblock %}
+{% block content %}
+<section class="dashboard-section"><div class="narrow-container">
+    <div class="page-heading-row"><div><span class="section-kicker">Admin · Academic setup</span><h1>{{ 'Edit programme' if is_edit else 'Add programme' }}</h1><p>{% if is_edit %}Changing these details does not delete connected academic records.{% else %}Create a programme without manually changing the source code.{% endif %}</p></div></div>
+    <form method="post" class="student-form-card" {% if is_edit %}data-confirm-edit="Editing a programme changes how its existing academic records are displayed. Continue?"{% endif %}><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="form-grid">
+        <div class="form-field"><label for="code">Programme code</label><input id="code" name="code" value="{{ programme.code|default('') }}" maxlength="30" required>{% if errors.code %}<small class="field-error">{{ errors.code }}</small>{% endif %}</div>
+        <div class="form-field"><label for="total_semesters">Total semesters</label><input id="total_semesters" name="total_semesters" type="number" min="1" max="12" value="{{ programme.total_semesters|default('') }}" required>{% if errors.total_semesters %}<small class="field-error">{{ errors.total_semesters }}</small>{% endif %}</div>
+        <div class="form-field full-width"><label for="name">Programme name</label><input id="name" name="name" value="{{ programme.name|default('') }}" maxlength="150" required>{% if errors.name %}<small class="field-error">{{ errors.name }}</small>{% endif %}</div>
+    </div><div class="form-actions"><a class="button cancel-button" href="{{ url_for('admin_programmes.programme_list') }}">Cancel</a><button class="button primary form-submit" type="submit">{{ 'Save changes' if is_edit else 'Add programme' }}</button></div></form>
+</div></section>
+{% endblock %}

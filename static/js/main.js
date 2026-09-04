@@ -146,3 +146,60 @@ if (courseSelect && semesterSelect) {
     courseSelect.addEventListener("change", () => filterSemesters(true));
     filterSemesters();
 }
+
+document.querySelectorAll("form[data-confirm-message], form[data-confirm-edit]").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+        const message = form.dataset.confirmMessage || form.dataset.confirmEdit;
+        if (message && !window.confirm(message)) event.preventDefault();
+    });
+});
+
+const deleteDialog = document.getElementById("delayed-delete-dialog");
+if (deleteDialog) {
+    const deleteForm = document.getElementById("delayed-delete-form");
+    const message = document.getElementById("delayed-delete-message");
+    const phraseLabel = document.getElementById("delayed-delete-phrase");
+    const confirmation = document.getElementById("delayed-delete-confirmation");
+    const submit = document.getElementById("delayed-delete-submit");
+    let countdownTimer;
+    let delayComplete = false;
+    let requiredPhrase = "";
+
+    const updateDeleteState = () => {
+        submit.disabled = !delayComplete || confirmation.value.trim().toUpperCase() !== requiredPhrase;
+    };
+
+    document.querySelectorAll("[data-delayed-delete]").forEach((button) => {
+        button.addEventListener("click", () => {
+            clearInterval(countdownTimer);
+            requiredPhrase = button.dataset.phrase.toUpperCase();
+            delayComplete = false;
+            confirmation.value = "";
+            deleteForm.action = button.dataset.url;
+            message.textContent = button.dataset.message;
+            phraseLabel.textContent = requiredPhrase;
+            let seconds = 10;
+            submit.textContent = `Delete in ${seconds} seconds`;
+            updateDeleteState();
+            deleteDialog.showModal();
+            countdownTimer = setInterval(() => {
+                seconds -= 1;
+                if (seconds <= 0) {
+                    clearInterval(countdownTimer);
+                    delayComplete = true;
+                    submit.textContent = "Permanently delete";
+                    updateDeleteState();
+                } else {
+                    submit.textContent = `Delete in ${seconds} seconds`;
+                }
+            }, 1000);
+        });
+    });
+
+    confirmation.addEventListener("input", updateDeleteState);
+    deleteDialog.querySelector("[data-close-dialog]").addEventListener("click", () => {
+        clearInterval(countdownTimer);
+        deleteDialog.close();
+    });
+    deleteDialog.addEventListener("close", () => clearInterval(countdownTimer));
+}

@@ -14,6 +14,7 @@ from routes.student_reports import student_reports_bp
 from routes.attendance_reports import attendance_reports_bp
 from routes.correction_requests import correction_requests_bp
 from routes.admin_students import admin_students_bp
+from routes.admin_programmes import admin_programmes_bp
 from routes.auth import auth_bp
 from routes.dashboard import dashboard_bp
 from routes.main import main_bp
@@ -33,6 +34,7 @@ def create_app(test_config=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(admin_students_bp)
+    app.register_blueprint(admin_programmes_bp)
     app.register_blueprint(admin_faculty_bp)
     app.register_blueprint(admin_faces_bp)
     app.register_blueprint(admin_assignments_bp)
