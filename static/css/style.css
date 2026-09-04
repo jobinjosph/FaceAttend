@@ -1558,6 +1558,10 @@ a {
     visibility: hidden;
 }
 
+.subject-filter-submit {
+    transform: translateY(-50%);
+}
+
 @media (max-width: 700px) {
     .list-filter-form {
         grid-template-columns: 1fr;
@@ -1565,6 +1569,10 @@ a {
 
     .subject-filter-spacer {
         display: none;
+    }
+
+    .subject-filter-submit {
+        transform: none;
     }
 }
 

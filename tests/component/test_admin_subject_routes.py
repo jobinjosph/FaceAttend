@@ -33,7 +33,7 @@ def test_admin_can_list_semester_three_subjects(client, monkeypatch):
     response = client.get("/admin/subjects")
     assert response.status_code == 200
     assert b'<a class="apple-shop-button"' in response.data
-    assert b'class="apple-shop-button apple-shop-button-grey"' in response.data
+    assert b'class="apple-shop-button apple-shop-button-grey subject-filter-submit"' in response.data
     assert b"Cloud Computing" in response.data
     assert b"Manage Subjects" in response.data
     assert b"Manage subjects across programmes, semesters, and sections." in response.data
