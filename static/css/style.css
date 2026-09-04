@@ -1384,6 +1384,10 @@ a {
     font: inherit;
 }
 
+.form-field .subject-activity-type {
+    height: 49px;
+}
+
 .course-combobox {
     position: relative;
 }
