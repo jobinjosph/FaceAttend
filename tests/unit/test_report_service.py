@@ -51,6 +51,45 @@ def test_report_filters_are_normalized_and_invalid_values_rejected():
 
 
 @pytest.mark.unit
+def test_cohort_filters_accept_and_validate_semester_context():
+    filters, errors = report_service.normalize_cohort_filters({"semester_id": "22"})
+
+    assert errors == {}
+    assert filters["semester_id"] == 22
+
+    _, errors = report_service.normalize_cohort_filters({"semester_id": "wrong"})
+    assert errors["semester_id"] == "Select a valid semester."
+
+
+@pytest.mark.unit
+def test_admin_cohort_report_scopes_records_and_options_to_semester(monkeypatch):
+    calls = []
+
+    def fetch_all(query, params=()):
+        calls.append((query, params))
+        return []
+
+    monkeypatch.setattr(report_service, "_fetch_all", fetch_all)
+
+    report_service.get_cohort_report(
+        1,
+        "ADMIN",
+        {"student_id": None, "subject_id": None, "month": "", "date": "", "semester_id": 22},
+    )
+
+    assert len(calls) == 3
+    history_query, history_params = calls[0]
+    subject_query, subject_params = calls[1]
+    student_query, student_params = calls[2]
+    assert "ats.semester_id=%s" in history_query
+    assert history_params == (22,)
+    assert "semester_id=%s" in subject_query
+    assert subject_params == (22,)
+    assert "ats.semester_id=%s" in student_query
+    assert student_params == (22,)
+
+
+@pytest.mark.unit
 def test_month_options_list_all_twelve_months_for_selected_year():
     options = report_service.get_month_options({"month": "2026-08"})
 

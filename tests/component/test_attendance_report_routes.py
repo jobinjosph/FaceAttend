@@ -19,6 +19,24 @@ def sample_cohort_report(faculty=None):
     }
 
 
+def academic_contexts():
+    return [
+        {"id": 3, "course_code": "MCA", "course_name": "Master of Computer Applications", "semester_number": 3},
+        {"id": 22, "course_code": "BCA", "course_name": "Bachelor of Computer Applications", "semester_number": 2},
+    ]
+
+
+def mock_academic_context(monkeypatch):
+    contexts = academic_contexts()
+    monkeypatch.setattr("services.timetable_service.list_timetable_contexts", lambda: contexts)
+    monkeypatch.setattr(
+        "services.timetable_service.get_timetable_context",
+        lambda semester_id=None: next(
+            (item for item in contexts if item["id"] == semester_id), contexts[0] if semester_id is None else None,
+        ),
+    )
+
+
 @pytest.mark.component
 def test_attendance_report_requires_login(client):
     assert client.get("/reports/attendance").status_code == 302
@@ -36,6 +54,8 @@ def test_staff_report_displays_filters_shortage_and_history(client, monkeypatch,
     login(client, role)
     faculty = {"id": 7, "full_name": "Dr. Faculty"} if role == "FACULTY" else None
     monkeypatch.setattr("services.report_service.get_cohort_report", lambda *args: sample_cohort_report(faculty))
+    if role == "ADMIN":
+        mock_academic_context(monkeypatch)
 
     response = client.get("/reports/attendance")
 
@@ -67,3 +87,31 @@ def test_report_exports_csv_and_pdf(client, monkeypatch):
     pdf_response = client.get("/reports/attendance/export.pdf")
     assert csv_response.status_code == 200 and b"25MCA03" in csv_response.data
     assert pdf_response.status_code == 200 and pdf_response.data.startswith(b"%PDF-1.4")
+
+
+@pytest.mark.component
+def test_admin_report_filters_selected_non_mca_semester(client, monkeypatch):
+    login(client, "ADMIN")
+    mock_academic_context(monkeypatch)
+    captured = {}
+    monkeypatch.setattr(
+        "services.report_service.get_cohort_report",
+        lambda user_id, role, filters: captured.update(filters=filters) or sample_cohort_report(),
+    )
+
+    response = client.get("/reports/attendance?programme=BCA&semester=2")
+
+    assert response.status_code == 200
+    assert captured["filters"]["semester_id"] == 22
+    assert b"BCA \xe2\x80\x94 Bachelor of Computer Applications" in response.data
+    assert b'name="semester_id" value="22"' in response.data
+    assert b"semester_id=22" in response.data
+
+
+@pytest.mark.component
+def test_invalid_admin_report_semester_returns_404(client, monkeypatch):
+    login(client, "ADMIN")
+    mock_academic_context(monkeypatch)
+
+    assert client.get("/reports/attendance?semester_id=999").status_code == 404
+    assert client.get("/reports/attendance/export.csv?semester_id=999").status_code == 404

@@ -71,6 +71,7 @@ def normalize_student_filters(values):
 def normalize_cohort_filters(values):
     filters, errors = normalize_filters(values)
     filters["student_id"] = None
+    filters["semester_id"] = None
     student_id = str(values.get("student_id", "")).strip()
     if student_id:
         try:
@@ -79,6 +80,14 @@ def normalize_cohort_filters(values):
                 raise ValueError
         except ValueError:
             errors["student_id"] = "Select a valid student."
+    semester_id = str(values.get("semester_id", "")).strip()
+    if semester_id:
+        try:
+            filters["semester_id"] = int(semester_id)
+            if filters["semester_id"] < 1:
+                raise ValueError
+        except ValueError:
+            errors["semester_id"] = "Select a valid semester."
     return filters, errors
 
 
@@ -149,7 +158,10 @@ def get_student_report(user_id, filters=None):
 
 
 def get_cohort_report(user_id, role, filters=None):
-    filters = filters or {"student_id": None, "subject_id": None, "month": "", "date": ""}
+    filters = filters or {
+        "student_id": None, "subject_id": None, "month": "", "date": "",
+        "semester_id": None,
+    }
     role = str(role).upper()
     faculty = None
     scope_clause = ""
@@ -168,6 +180,9 @@ def get_cohort_report(user_id, role, filters=None):
 
     clauses = ["ats.status='CONFIRMED'"]
     params = []
+    if filters.get("semester_id"):
+        clauses.append("ats.semester_id=%s")
+        params.append(filters["semester_id"])
     if filters.get("student_id"):
         clauses.append("ar.student_id=%s")
         params.append(filters["student_id"])
@@ -208,17 +223,29 @@ def get_cohort_report(user_id, role, filters=None):
             (faculty["id"],),
         )
     else:
+        subject_clauses = ["is_active=TRUE"]
+        subject_params = []
+        if filters.get("semester_id"):
+            subject_clauses.append("semester_id=%s")
+            subject_params.append(filters["semester_id"])
         subjects = _fetch_all(
-            "SELECT id, subject_code, subject_name FROM subjects WHERE is_active=TRUE ORDER BY subject_code"
+            f"""SELECT id, subject_code, subject_name FROM subjects
+                WHERE {' AND '.join(subject_clauses)} ORDER BY subject_code""",
+            tuple(subject_params),
         )
+    student_scope = scope_clause
+    student_params = list(scope_params)
+    if filters.get("semester_id"):
+        student_scope += " AND ats.semester_id=%s"
+        student_params.append(filters["semester_id"])
     students = _fetch_all(
         f"""SELECT DISTINCT st.id, st.register_number, st.full_name
             FROM students st
             JOIN attendance_records ar ON ar.student_id=st.id
             JOIN attendance_sessions ats ON ats.id=ar.session_id
-            WHERE st.is_active=TRUE{scope_clause}
+            WHERE st.is_active=TRUE{student_scope}
             ORDER BY st.full_name, st.register_number""",
-        tuple(scope_params),
+        tuple(student_params),
     )
     return build_cohort_report(history, students, subjects, faculty)
 

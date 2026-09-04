@@ -21,7 +21,7 @@ def test_filters_and_faculty_identity_reach_report_service(client, monkeypatch):
     assert response.status_code == 200
     assert captured == {
         "user_id": 22, "role": "FACULTY",
-        "filters": {"student_id": 3, "subject_id": 4, "month": "2026-08", "date": "2026-08-25"},
+        "filters": {"student_id": 3, "subject_id": 4, "month": "2026-08", "date": "2026-08-25", "semester_id": None},
     }
 
 

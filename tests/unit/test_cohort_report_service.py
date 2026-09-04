@@ -37,7 +37,10 @@ def test_cohort_filters_validate_student_subject_month_and_date():
         {"student_id": "3", "subject_id": "4", "month": "2026-08", "date": "2026-08-25"}
     )
     assert errors == {}
-    assert filters == {"student_id": 3, "subject_id": 4, "month": "2026-08", "date": "2026-08-25"}
+    assert filters == {
+        "student_id": 3, "subject_id": 4, "month": "2026-08",
+        "date": "2026-08-25", "semester_id": None,
+    }
 
     _, errors = report_service.normalize_cohort_filters(
         {"student_id": "bad", "subject_id": "0", "month": "August", "date": "yesterday"}
