@@ -71,3 +71,25 @@ def test_remove_period_returns_to_its_selected_semester(client, monkeypatch):
 
     assert response.status_code == 302
     assert response.headers["Location"].endswith("/admin/timetable?semester_id=22")
+
+
+@pytest.mark.component
+@pytest.mark.parametrize("method", ["get", "post"])
+def test_invalid_timetable_semester_context_returns_404(client, monkeypatch, method):
+    login_as(client, "ADMIN")
+    monkeypatch.setattr("services.timetable_service.get_timetable_context", lambda semester_id: None)
+    request_method = getattr(client, method)
+
+    response = request_method(
+        "/admin/timetable/add?semester_id=999",
+        data={
+            "semester_id": "999",
+            "activity_name": "Library",
+            "day_of_week": "1",
+            "period_number": "1",
+            "start_time": "09:00",
+            "end_time": "09:50",
+        } if method == "post" else None,
+    )
+
+    assert response.status_code == 404

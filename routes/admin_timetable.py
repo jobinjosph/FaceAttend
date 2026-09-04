@@ -19,7 +19,11 @@ def render_period_form(period=None, errors=None, status=200, semester_id=None):
     try:
         context=timetable_service.get_timetable_context(semester_id)
     except mysql.connector.Error:
-        context={"id":semester_id,"course_code":"MCA","course_name":"Master of Computer Applications","semester_number":3,"section":"A","academic_year":""}
+        if semester_id is not None:
+            raise
+        context={"id":None,"course_code":"MCA","course_name":"Master of Computer Applications","semester_number":3,"section":"A","academic_year":""}
+    if semester_id is not None and context is None:
+        abort(404)
     return render_template("admin/timetable/form.html",period=period or {},errors=errors or {},assignments=assignments,days=timetable_service.DAYS,context=context),status
 
 
@@ -83,6 +87,8 @@ def validate_and_resolve(data, exclude_period_id=None, semester_id=None):
 @role_required("ADMIN")
 def add_period():
     semester_id=request.values.get("semester_id",type=int)
+    if semester_id is not None and timetable_service.get_timetable_context(semester_id) is None:
+        abort(404)
     if request.method == "GET":
         return render_period_form(semester_id=semester_id)
     data = timetable_service.normalize_period_data(request.form)

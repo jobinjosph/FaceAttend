@@ -79,3 +79,23 @@ def test_admin_can_deactivate_subject(client, monkeypatch):
     response = client.post("/admin/subjects/7/status", data={"is_active": "0"})
     assert response.status_code == 302
     assert changed == {"id": 7, "active": False}
+
+
+@pytest.mark.component
+@pytest.mark.parametrize("method", ["get", "post"])
+def test_invalid_subject_semester_context_returns_404(client, monkeypatch, method):
+    login_as(client, "ADMIN")
+    monkeypatch.setattr("services.timetable_service.get_timetable_context", lambda semester_id: None)
+    request_method = getattr(client, method)
+
+    response = request_method(
+        "/admin/subjects/add?semester_id=999",
+        data={
+            "semester_id": "999",
+            "subject_code": "TEST101",
+            "subject_name": "Test Subject",
+            "activity_type": "LECTURE",
+        } if method == "post" else None,
+    )
+
+    assert response.status_code == 404

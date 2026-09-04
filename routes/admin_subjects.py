@@ -13,7 +13,11 @@ def render_subject_form(subject=None, errors=None, status=200, semester_id=None)
     try:
         context=timetable_service.get_timetable_context(semester_id)
     except mysql.connector.Error:
+        if semester_id is not None:
+            raise
         context=None
+    if semester_id is not None and context is None:
+        abort(404)
     return render_template(
         "admin/subjects/form.html",
         subject=subject or {},
@@ -69,10 +73,13 @@ def add_subject():
     errors = subject_service.validate_subject_data(data)
     if errors:
         return render_subject_form(data,errors,400,semester_id)
-    semester = ({"id":semester_id} if semester_id else subject_service.get_mca_semester_three())
+    semester = (timetable_service.get_timetable_context(semester_id)
+                if semester_id else subject_service.get_mca_semester_three())
     if semester is None:
-        flash("The selected programme and semester are not configured.", "error")
-        return render_subject_form(data,status=503,semester_id=semester_id)
+        if semester_id is not None:
+            abort(404)
+        flash("The default programme and semester are not configured.", "error")
+        return render_subject_form(data,status=503)
     try:
         subject_service.create_subject(data, semester["id"])
     except mysql.connector.IntegrityError:
