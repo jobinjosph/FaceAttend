@@ -10,6 +10,7 @@
     <form class="list-filter-form timetable-context-filters subject-context-filters" method="get">
         <label class="form-field" for="programme">Programme<select id="programme" name="programme" onchange="this.form.submit()">{% for item in programmes %}<option value="{{ item.code }}" {{ 'selected' if context and item.code == context.course_code }}>{{ item.code }} — {{ item.name }}</option>{% endfor %}</select></label>
         <label class="form-field" for="semester">Semester<select id="semester" name="semester" onchange="this.form.submit()">{% for item in semester_options %}<option value="{{ item.semester_number }}" {{ 'selected' if context and item.id == context.id }}>Semester {{ item.semester_number }}{% if item.section != 'A' %} — Section {{ item.section }}{% endif %}</option>{% endfor %}</select></label>
+        <span class="apple-shop-button apple-shop-button-grey subject-filter-spacer" aria-hidden="true">Filter</span>
     </form>
     <form class="list-filter-form" method="get"><input type="hidden" name="semester_id" value="{{ context.id if context }}">
         <input name="search" value="{{ search }}" placeholder="Search code or subject name" aria-label="Search subjects">
