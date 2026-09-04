@@ -56,3 +56,18 @@ def test_unknown_period_returns_404(client, monkeypatch):
     monkeypatch.setattr("services.timetable_service.get_period", lambda period_id: None)
     assert client.get("/admin/timetable/999/edit").status_code == 404
     assert client.post("/admin/timetable/999/remove").status_code == 404
+
+
+@pytest.mark.component
+def test_remove_period_returns_to_its_selected_semester(client, monkeypatch):
+    login_as(client, "ADMIN")
+    monkeypatch.setattr(
+        "services.timetable_service.get_period",
+        lambda period_id: {"id": period_id, "semester_id": 22},
+    )
+    monkeypatch.setattr("services.timetable_service.delete_period", lambda period_id: True)
+
+    response = client.post("/admin/timetable/7/remove")
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/admin/timetable?semester_id=22")

@@ -44,3 +44,27 @@ def test_duplicate_day_period_is_rejected(client, monkeypatch):
     response = client.post("/admin/timetable/add", data=VALID)
     assert response.status_code == 409
     assert b"period number is already used" in response.data
+
+
+@pytest.mark.integration
+def test_non_mca_context_is_kept_when_period_validation_fails(client, monkeypatch):
+    login(client)
+    context = {
+        "id": 22,
+        "course_code": "BCA",
+        "course_name": "Bachelor of Computer Applications",
+        "semester_number": 2,
+        "section": "A",
+        "academic_year": "2026-27",
+    }
+    monkeypatch.setattr("services.timetable_service.get_period", lambda period_id: {
+        "id": period_id, "semester_id": 22, "assignment_id": 3,
+    })
+    monkeypatch.setattr("services.timetable_service.get_assignment_options", lambda semester_id: [])
+    monkeypatch.setattr("services.timetable_service.get_timetable_context", lambda semester_id: context)
+
+    response = client.post("/admin/timetable/8/edit", data={})
+
+    assert response.status_code == 400
+    assert b"Admin \xc2\xb7 BCA Semester 2" in response.data
+    assert b'name="semester_id" value="22"' in response.data

@@ -93,11 +93,11 @@ def add_period():
         timetable_service.create_period(data, assignment)
     except mysql.connector.IntegrityError:
         errors["period_number"] = "That period number is already used on this day."
-        return render_period_form(data, errors, 409)
+        return render_period_form(data, errors, 409, semester_id)
     except mysql.connector.Error as exc:
         current_app.logger.error("Could not create timetable period: %s", exc)
         flash("The timetable period could not be saved.", "error")
-        return render_period_form(data, status=503)
+        return render_period_form(data, status=503, semester_id=semester_id)
     flash("Timetable period added successfully.", "success")
     return redirect(url_for("admin_timetable.timetable_list",**({"semester_id":semester_id} if semester_id else {})))
 
@@ -114,12 +114,12 @@ def edit_period(period_id):
     data["id"] = period_id
     errors, assignment = validate_and_resolve(data,period_id,period.get("semester_id"))
     if errors:
-        return render_period_form(data, errors, 400)
+        return render_period_form(data, errors, 400, period.get("semester_id"))
     try:
         timetable_service.update_period(period_id, data, assignment)
     except mysql.connector.IntegrityError:
         errors["period_number"] = "That period number is already used on this day."
-        return render_period_form(data, errors, 409)
+        return render_period_form(data, errors, 409, period.get("semester_id"))
     flash("Timetable period updated successfully.", "success")
     return redirect(url_for("admin_timetable.timetable_list",**({"semester_id":period.get('semester_id')} if period.get('semester_id') else {})))
 
@@ -127,14 +127,15 @@ def edit_period(period_id):
 @admin_timetable_bp.post("/<int:period_id>/remove")
 @role_required("ADMIN")
 def remove_period(period_id):
-    if timetable_service.get_period(period_id) is None:
+    period = timetable_service.get_period(period_id)
+    if period is None:
         abort(404)
+    semester_id = period.get("semester_id")
     try:
         timetable_service.delete_period(period_id)
     except mysql.connector.Error as exc:
         current_app.logger.error("Could not remove timetable period: %s", exc)
         flash("The timetable period could not be removed.", "error")
-        return redirect(url_for("admin_timetable.timetable_list"))
+        return redirect(url_for("admin_timetable.timetable_list",**({"semester_id":semester_id} if semester_id else {})))
     flash("Timetable period removed.", "success")
-    semester_id=request.form.get("semester_id",type=int)
     return redirect(url_for("admin_timetable.timetable_list",**({"semester_id":semester_id} if semester_id else {})))
