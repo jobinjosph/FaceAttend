@@ -1542,8 +1542,8 @@ a {
 }
 
 .timetable-context-filters {
-    grid-template-columns: minmax(360px, 1fr) minmax(250px, 340px);
-    gap: 1.15rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
 }
 
 .timetable-context-filters select {
