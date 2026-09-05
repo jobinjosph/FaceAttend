@@ -3,10 +3,8 @@
 {% block content %}
 <section class="dashboard-section"><div class="container">
 <div class="page-heading-row"><div><span class="section-kicker">Admin · Academic setup</span><h1>Manage Timetable</h1><p>Schedule periods across programmes, semesters, and sections.</p></div><a class="apple-shop-button" href="{{ url_for('admin_timetable.add_period',semester_id=context.id if context) }}">Add period</a></div>
-<form class="list-filter-form timetable-context-filters" method="get">
-<label class="form-field" for="programme">Programme<select id="programme" name="programme" onchange="this.form.submit()">{% for item in programmes %}<option value="{{ item.code }}" {{ 'selected' if context and item.code == context.course_code }}>{{ item.code }} — {{ item.name }}</option>{% endfor %}</select></label>
-<label class="form-field" for="semester">Semester<select id="semester" name="semester" onchange="this.form.submit()">{% for item in semester_options %}<option value="{{ item.semester_number }}" {{ 'selected' if context and item.id == context.id }}>Semester {{ item.semester_number }}{% if item.section != 'A' %} — Section {{ item.section }}{% endif %}</option>{% endfor %}</select></label>
-</form>
+{% include "admin/_academic_context_selector.html" %}
+{% if context %}<p>{{ context.course_code }} · {{ context.academic_year }} · Semester {{ context.semester_number }} · Section {{ context.section }}</p>{% else %}<p>No active semester groups are configured. Add one in Academic Structure first.</p>{% endif %}
 {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert alert-{{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
 <div class="weekly-timetable">
 {% for day_number, day_name in days.items() %}<section class="timetable-day"><h2>{{ day_name }}</h2>

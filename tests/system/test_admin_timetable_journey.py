@@ -1,6 +1,15 @@
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def academic_context(monkeypatch):
+    context = {"id": 2, "course_code": "MCA", "course_name": "Master of Computer Applications",
+               "semester_number": 3, "section": "A", "academic_year": "2026-27"}
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", lambda: [context])
+    monkeypatch.setattr("services.academic_context_service.get_active_context",
+                        lambda semester_id: context if semester_id == 2 else None)
+
+
 @pytest.mark.system
 def test_admin_can_add_edit_view_and_remove_timetable_period(client, monkeypatch):
     periods = []
@@ -13,11 +22,11 @@ def test_admin_can_add_edit_view_and_remove_timetable_period(client, monkeypatch
     def update(period_id, data, selected):
         periods[0].update(data); return True
 
-    monkeypatch.setattr("services.timetable_service.get_assignment_options", lambda: options)
-    monkeypatch.setattr("services.timetable_service.get_assignment", lambda assignment_id: assignment)
+    monkeypatch.setattr("services.timetable_service.get_assignment_options", lambda semester_id: options)
+    monkeypatch.setattr("services.timetable_service.get_assignment", lambda assignment_id, semester_id: assignment)
     monkeypatch.setattr("services.timetable_service.find_conflict", lambda *args: None)
     monkeypatch.setattr("services.timetable_service.create_period", create)
-    monkeypatch.setattr("services.timetable_service.list_periods", lambda: periods)
+    monkeypatch.setattr("services.timetable_service.list_periods", lambda semester_id: periods)
     monkeypatch.setattr("services.timetable_service.get_period", lambda period_id: periods[0] if periods else None)
     monkeypatch.setattr("services.timetable_service.update_period", update)
     monkeypatch.setattr("services.timetable_service.delete_period", lambda period_id: periods.clear() or True)
