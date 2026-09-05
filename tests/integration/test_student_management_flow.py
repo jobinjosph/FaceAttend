@@ -22,16 +22,20 @@ def form_data(**changes):
     return data
 
 
-def options():
-    return ([{"id": 1, "code": "MCA", "name": "MCA"}], [])
+def contexts():
+    return [
+        {"id": 2, "course_id": 1, "course_code": "MCA", "course_name": "MCA",
+         "semester_number": 3, "section": "A", "academic_year": "2026-27"},
+        {"id": 3, "course_id": 1, "course_code": "MCA", "course_name": "MCA",
+         "semester_number": 4, "section": "A", "academic_year": "2026-27"},
+    ]
 
 
 @pytest.mark.integration
 def test_valid_student_is_sent_to_service_and_redirected(client, monkeypatch):
     login_admin(client)
     captured = {}
-    monkeypatch.setattr("services.student_service.semester_belongs_to_course", lambda *args: True)
-    monkeypatch.setattr("services.student_service.get_academic_options", options)
+    monkeypatch.setattr("services.student_service.active_semester_belongs_to_course", lambda *args: True)
     monkeypatch.setattr(
         "services.student_service.create_student",
         lambda data: captured.update(data) or 5,
@@ -40,7 +44,7 @@ def test_valid_student_is_sent_to_service_and_redirected(client, monkeypatch):
     response = client.post("/admin/students/add", data=form_data())
 
     assert response.status_code == 302
-    assert response.headers["Location"].endswith("/admin/students")
+    assert response.headers["Location"].endswith("/admin/students?semester_id=2")
     assert captured["register_number"] == "23MCA104"
     assert captured["course_id"] == 1
     assert captured["password"] == "Student@123"
@@ -49,7 +53,7 @@ def test_valid_student_is_sent_to_service_and_redirected(client, monkeypatch):
 @pytest.mark.integration
 def test_student_creation_requires_an_initial_password(client, monkeypatch):
     login_admin(client)
-    monkeypatch.setattr("services.student_service.get_academic_options", options)
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", contexts)
 
     response = client.post("/admin/students/add", data=form_data(password=""))
 
@@ -60,8 +64,8 @@ def test_student_creation_requires_an_initial_password(client, monkeypatch):
 @pytest.mark.integration
 def test_duplicate_student_login_email_is_rejected(client, monkeypatch):
     login_admin(client)
-    monkeypatch.setattr("services.student_service.semester_belongs_to_course", lambda *args: True)
-    monkeypatch.setattr("services.student_service.get_academic_options", options)
+    monkeypatch.setattr("services.student_service.active_semester_belongs_to_course", lambda *args: True)
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", contexts)
 
     def duplicate_email(data):
         raise mysql.connector.IntegrityError("Duplicate entry for key users.email")
@@ -77,8 +81,8 @@ def test_duplicate_student_login_email_is_rejected(client, monkeypatch):
 @pytest.mark.integration
 def test_duplicate_register_number_is_rejected(client, monkeypatch):
     login_admin(client)
-    monkeypatch.setattr("services.student_service.semester_belongs_to_course", lambda *args: True)
-    monkeypatch.setattr("services.student_service.get_academic_options", options)
+    monkeypatch.setattr("services.student_service.active_semester_belongs_to_course", lambda *args: True)
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", contexts)
 
     def duplicate_student(data):
         raise mysql.connector.IntegrityError("duplicate")
@@ -94,8 +98,8 @@ def test_duplicate_register_number_is_rejected(client, monkeypatch):
 @pytest.mark.integration
 def test_semester_must_belong_to_selected_course(client, monkeypatch):
     login_admin(client)
-    monkeypatch.setattr("services.student_service.semester_belongs_to_course", lambda *args: False)
-    monkeypatch.setattr("services.student_service.get_academic_options", options)
+    monkeypatch.setattr("services.student_service.active_semester_belongs_to_course", lambda *args: False)
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", contexts)
 
     response = client.post("/admin/students/add", data=form_data())
 
@@ -109,7 +113,7 @@ def test_student_can_be_deactivated(client, monkeypatch):
     captured = {}
     monkeypatch.setattr(
         "services.student_service.get_student",
-        lambda student_id: {"id": student_id, "is_active": True},
+        lambda student_id: {"id": student_id, "is_active": True, "semester_id": 2},
     )
     monkeypatch.setattr(
         "services.student_service.set_student_active",
@@ -120,3 +124,42 @@ def test_student_can_be_deactivated(client, monkeypatch):
 
     assert response.status_code == 302
     assert captured == {"id": 8, "active": False}
+
+
+@pytest.mark.integration
+def test_selected_students_are_moved_to_an_active_destination(client, monkeypatch):
+    login_admin(client)
+    captured = {}
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", contexts)
+    monkeypatch.setattr("services.student_service.list_students", lambda semester_id: [])
+    monkeypatch.setattr(
+        "services.student_service.move_students",
+        lambda ids, source, destination, admin: captured.update(
+            ids=ids, source=source, destination=destination, admin=admin
+        ) or len(ids),
+    )
+
+    response = client.post(
+        "/admin/students/placement",
+        data={"semester_id": "2", "destination_semester_id": "3", "student_id": ["7", "8"]},
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/admin/students?semester_id=3")
+    assert captured == {"ids": [7, 8], "source": 2, "destination": 3, "admin": 1}
+
+
+@pytest.mark.integration
+def test_placement_rejects_same_group_and_empty_selection(client, monkeypatch):
+    login_admin(client)
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", contexts)
+    monkeypatch.setattr("services.student_service.list_students", lambda semester_id: [])
+
+    response = client.post(
+        "/admin/students/placement",
+        data={"semester_id": "2", "destination_semester_id": "2"},
+    )
+
+    assert response.status_code == 400
+    assert b"Select at least one student" in response.data
+    assert b"different from the current group" in response.data

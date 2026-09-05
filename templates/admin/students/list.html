@@ -11,7 +11,10 @@
                 <h1>Student management</h1>
                 <p>Add student login accounts and prepare their profiles for face registration.</p>
             </div>
-            <a class="apple-shop-button" href="{{ url_for('admin_students.add_student') }}">Add student</a>
+            <div class="page-heading-actions">
+                {% if context %}<a class="button report-secondary-button" href="{{ url_for('admin_students.manage_placement', semester_id=context.id) }}">Promote or transfer</a>{% endif %}
+                <a class="apple-shop-button" href="{{ url_for('admin_students.add_student', semester_id=context.id if context) }}">Add student</a>
+            </div>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -19,6 +22,9 @@
                 <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
             {% endfor %}
         {% endwith %}
+
+        {% include "admin/_academic_context_selector.html" %}
+        {% if context %}<p>{{ context.course_code }} · {{ context.academic_year }} · Semester {{ context.semester_number }} · Section {{ context.section }}</p>{% else %}<p>No active semester groups are configured. Add one in Academic Structure first.</p>{% endif %}
 
         <div class="table-card">
             {% if students %}
@@ -84,7 +90,7 @@
                 <div class="empty-state">
                     <strong>No students added yet</strong>
                     <p>Add the first student to begin building your class list.</p>
-                    <a href="{{ url_for('admin_students.add_student') }}">Add first student →</a>
+                    {% if context %}<a href="{{ url_for('admin_students.add_student', semester_id=context.id) }}">Add first student →</a>{% endif %}
                 </div>
             {% endif %}
         </div>

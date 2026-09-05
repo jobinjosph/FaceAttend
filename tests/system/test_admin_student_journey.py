@@ -4,11 +4,12 @@ import pytest
 @pytest.mark.system
 def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
     students = []
-    courses = [{"id": 1, "code": "MCA", "name": "Master of Computer Applications"}]
-    semesters = [
+    contexts = [
         {
             "id": 2,
             "course_id": 1,
+            "course_code": "MCA",
+            "course_name": "Master of Computer Applications",
             "semester_number": 3,
             "section": "A",
             "academic_year": "2026-27",
@@ -38,10 +39,10 @@ def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
     def set_active(student_id, active):
         students[0]["is_active"] = active
 
-    monkeypatch.setattr("services.student_service.get_academic_options", lambda: (courses, semesters))
-    monkeypatch.setattr("services.student_service.semester_belongs_to_course", lambda *args: True)
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", lambda: contexts)
+    monkeypatch.setattr("services.student_service.active_semester_belongs_to_course", lambda *args: True)
     monkeypatch.setattr("services.student_service.create_student", create_student)
-    monkeypatch.setattr("services.student_service.list_students", lambda: students)
+    monkeypatch.setattr("services.student_service.list_students", lambda semester_id: students)
     monkeypatch.setattr("services.student_service.get_student", lambda student_id: students[0] if students else None)
     monkeypatch.setattr("services.student_service.update_student", update_student)
     monkeypatch.setattr("services.student_service.set_student_active", set_active)

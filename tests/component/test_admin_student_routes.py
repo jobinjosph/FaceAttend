@@ -9,19 +9,16 @@ def login_as(client, role):
         user_session["role"] = role
 
 
-def academic_options():
-    return (
-        [{"id": 1, "code": "MCA", "name": "Master of Computer Applications"}],
-        [
-            {
-                "id": 2,
-                "course_id": 1,
-                "semester_number": 3,
-                "section": "A",
-                "academic_year": "2026-27",
-            }
-        ],
-    )
+def academic_contexts():
+    return [{
+        "id": 2, "course_id": 1, "course_code": "MCA",
+        "course_name": "Master of Computer Applications", "semester_number": 3,
+        "section": "A", "academic_year": "2026-27",
+    }, {
+        "id": 3, "course_id": 1, "course_code": "MCA",
+        "course_name": "Master of Computer Applications", "semester_number": 4,
+        "section": "A", "academic_year": "2026-27",
+    }]
 
 
 @pytest.mark.component
@@ -44,7 +41,8 @@ def test_non_admin_roles_cannot_access_student_management(client, role):
 @pytest.mark.component
 def test_admin_can_open_empty_student_list(client, monkeypatch):
     login_as(client, "ADMIN")
-    monkeypatch.setattr("services.student_service.list_students", lambda: [])
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", academic_contexts)
+    monkeypatch.setattr("services.student_service.list_students", lambda semester_id: [])
 
     response = client.get("/admin/students")
 
@@ -57,8 +55,8 @@ def test_admin_can_open_empty_student_list(client, monkeypatch):
 def test_admin_can_open_add_student_form(client, monkeypatch):
     login_as(client, "ADMIN")
     monkeypatch.setattr(
-        "services.student_service.get_academic_options",
-        academic_options,
+        "services.academic_context_service.list_active_contexts",
+        academic_contexts,
     )
 
     response = client.get("/admin/students/add")
@@ -68,11 +66,10 @@ def test_admin_can_open_add_student_form(client, monkeypatch):
     assert b"Cloud" not in response.data
     assert b"MCA" in response.data
     assert b"Semester 3" in response.data
-    assert b"Section A" not in response.data
-    assert b"2026-27" not in response.data
-    assert b"Search programmes" in response.data
-    assert b'data-course-combobox' in response.data
-    assert b'data-value="1"' in response.data
+    assert b"Section A" in response.data
+    assert b"2026-27" in response.data
+    assert b'name="course_id"' in response.data
+    assert b'id="student_academic_year"' in response.data
     assert b"Student login email" in response.data
     assert b"Initial password" in response.data
 
@@ -81,8 +78,8 @@ def test_admin_can_open_add_student_form(client, monkeypatch):
 def test_invalid_student_form_displays_errors(client, monkeypatch):
     login_as(client, "ADMIN")
     monkeypatch.setattr(
-        "services.student_service.get_academic_options",
-        academic_options,
+        "services.academic_context_service.list_active_contexts",
+        academic_contexts,
     )
 
     response = client.post("/admin/students/add", data={})
@@ -110,7 +107,7 @@ def test_student_form_database_failure_is_controlled(client, monkeypatch):
         raise mysql.connector.Error("private database detail")
 
     monkeypatch.setattr(
-        "services.student_service.get_academic_options",
+        "services.academic_context_service.list_active_contexts",
         database_failure,
     )
 
@@ -119,3 +116,22 @@ def test_student_form_database_failure_is_controlled(client, monkeypatch):
     assert response.status_code == 503
     assert b"Database unavailable" in response.data
     assert b"private database detail" not in response.data
+
+
+@pytest.mark.component
+def test_admin_can_open_student_placement_page(client, monkeypatch):
+    login_as(client, "ADMIN")
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", academic_contexts)
+    monkeypatch.setattr(
+        "services.student_service.list_students",
+        lambda semester_id: [{"id": 8, "register_number": "23MCA08", "full_name": "Student",
+                              "email": "student@example.com", "is_active": True}],
+    )
+
+    response = client.get("/admin/students/placement?semester_id=2")
+
+    assert response.status_code == 200
+    assert b"Promote or transfer students" in response.data
+    assert b"MCA" in response.data
+    assert b"Semester 4" in response.data
+    assert b' name="student_id" value="8"' in response.data

@@ -22,129 +22,95 @@ if (year) {
 
 const courseSelect = document.getElementById("course_id");
 const semesterSelect = document.getElementById("semester_id");
+const academicYearSelect = document.getElementById("student_academic_year");
+const semesterNumberSelect = document.getElementById("student_semester_number");
 
-const courseCombobox = document.querySelector("[data-course-combobox]");
-
-if (courseCombobox && courseSelect) {
-    const trigger = courseCombobox.querySelector(".course-combobox-button");
-    const selectedLabel = courseCombobox.querySelector("#course_selected_label");
-    const menu = courseCombobox.querySelector(".course-combobox-menu");
-    const search = courseCombobox.querySelector(".course-search");
-    const options = Array.from(courseCombobox.querySelectorAll(".course-option"));
-    const noResults = courseCombobox.querySelector(".course-no-results");
-
-    const closeMenu = () => {
-        menu.hidden = true;
-        trigger.setAttribute("aria-expanded", "false");
-        search.value = "";
-        options.forEach((option) => {
-            option.hidden = false;
-        });
-        noResults.hidden = true;
+if (courseSelect && academicYearSelect && semesterNumberSelect && semesterSelect) {
+    const contexts = Array.from(semesterSelect.options)
+        .filter((option) => option.value)
+        .map((option) => ({
+            id: option.value,
+            courseId: option.dataset.courseId,
+            academicYear: option.dataset.academicYear,
+            semesterNumber: option.dataset.semesterNumber,
+            sectionLabel: option.textContent.trim(),
+        }));
+    const initial = {
+        academicYear: academicYearSelect.value,
+        semesterNumber: semesterNumberSelect.value,
+        semesterId: semesterSelect.value,
     };
 
-    const openMenu = () => {
-        menu.hidden = false;
-        trigger.setAttribute("aria-expanded", "true");
-        search.focus();
+    const replaceOptions = (select, placeholder, items, selectedValue) => {
+        const uniqueItems = items.filter(
+            (item, index, allItems) => allItems.findIndex((candidate) => candidate.value === item.value) === index
+        );
+        select.replaceChildren(new Option(placeholder, ""));
+        uniqueItems.forEach((item) => select.add(new Option(item.label, item.value)));
+        select.value = uniqueItems.some((item) => item.value === selectedValue)
+            ? selectedValue
+            : (uniqueItems[0]?.value || "");
     };
 
-    trigger.addEventListener("click", () => {
-        if (menu.hidden) openMenu();
-        else closeMenu();
-    });
+    const refreshSections = (preserveSelection = true) => {
+        const matching = contexts.filter(
+            (item) => item.courseId === courseSelect.value
+                && item.academicYear === academicYearSelect.value
+                && item.semesterNumber === semesterNumberSelect.value
+        );
+        replaceOptions(
+            semesterSelect,
+            "Select section",
+            matching.map((item) => ({ value: item.id, label: item.sectionLabel })),
+            preserveSelection ? initial.semesterId : ""
+        );
+    };
 
-    search.addEventListener("input", () => {
-        const query = search.value.trim().toLowerCase();
-        let visibleCount = 0;
+    const refreshSemesters = (preserveSelection = true) => {
+        const matching = contexts.filter(
+            (item) => item.courseId === courseSelect.value && item.academicYear === academicYearSelect.value
+        );
+        replaceOptions(
+            semesterNumberSelect,
+            "Select semester",
+            matching.map((item) => ({ value: item.semesterNumber, label: `Semester ${item.semesterNumber}` })),
+            preserveSelection ? initial.semesterNumber : ""
+        );
+        refreshSections(preserveSelection);
+    };
 
-        options.forEach((option) => {
-            const visible = option.dataset.label.toLowerCase().includes(query);
-            option.hidden = !visible;
-            if (visible) visibleCount += 1;
-        });
+    const refreshAcademicYears = (preserveSelection = true) => {
+        const matching = contexts.filter((item) => item.courseId === courseSelect.value);
+        replaceOptions(
+            academicYearSelect,
+            "Select academic year",
+            matching.map((item) => ({ value: item.academicYear, label: item.academicYear })),
+            preserveSelection ? initial.academicYear : ""
+        );
+        refreshSemesters(preserveSelection);
+    };
 
-        noResults.hidden = visibleCount !== 0;
-    });
-
-    search.addEventListener("keydown", (event) => {
-        const visibleOptions = options.filter((option) => !option.hidden);
-
-        if (event.key === "Enter" && visibleOptions.length > 0) {
-            event.preventDefault();
-            visibleOptions[0].click();
-        }
-
-        if (event.key === "ArrowDown" && visibleOptions.length > 0) {
-            event.preventDefault();
-            visibleOptions[0].focus();
-        }
-    });
-
-    options.forEach((option) => {
-        option.addEventListener("click", () => {
-            courseSelect.value = option.dataset.value;
-            selectedLabel.textContent = option.dataset.label;
-            options.forEach((item) => {
-                item.setAttribute("aria-selected", String(item === option));
-            });
-            courseSelect.dispatchEvent(new Event("change", { bubbles: true }));
-            closeMenu();
-            trigger.focus();
-        });
-
-        option.addEventListener("keydown", (event) => {
-            const visibleOptions = options.filter((item) => !item.hidden);
-            const currentIndex = visibleOptions.indexOf(option);
-
-            if (event.key === "ArrowDown") {
-                event.preventDefault();
-                visibleOptions[Math.min(currentIndex + 1, visibleOptions.length - 1)].focus();
-            }
-
-            if (event.key === "ArrowUp") {
-                event.preventDefault();
-                if (currentIndex === 0) search.focus();
-                else visibleOptions[currentIndex - 1].focus();
-            }
-        });
-    });
-
-    document.addEventListener("click", (event) => {
-        if (!courseCombobox.contains(event.target)) closeMenu();
-    });
-
-    courseCombobox.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-            closeMenu();
-            trigger.focus();
-        }
-    });
+    courseSelect.addEventListener("change", () => refreshAcademicYears(false));
+    academicYearSelect.addEventListener("change", () => refreshSemesters(false));
+    semesterNumberSelect.addEventListener("change", () => refreshSections(false));
+    refreshAcademicYears(true);
 }
 
-if (courseSelect && semesterSelect) {
-    const placeholderOption = semesterSelect.options[0].cloneNode(true);
-    const semesterOptions = Array.from(semesterSelect.options)
-        .filter((option) => option.value)
-        .map((option) => option.cloneNode(true));
-
-    const filterSemesters = (resetSelection = false) => {
-        const selectedCourse = courseSelect.value;
-        const selectedSemester = resetSelection ? "" : semesterSelect.value;
-
-        semesterSelect.replaceChildren(placeholderOption.cloneNode(true));
-
-        semesterOptions
-            .filter((option) => option.dataset.courseId === selectedCourse)
-            .forEach((option) => {
-                const visibleOption = option.cloneNode(true);
-                visibleOption.selected = visibleOption.value === selectedSemester;
-                semesterSelect.appendChild(visibleOption);
-            });
-    };
-
-    courseSelect.addEventListener("change", () => filterSemesters(true));
-    filterSemesters();
+const selectAllStudents = document.querySelector("[data-select-all-students]");
+if (selectAllStudents) {
+    const studentCheckboxes = Array.from(document.querySelectorAll('input[name="student_id"]'));
+    selectAllStudents.addEventListener("change", () => {
+        studentCheckboxes.forEach((checkbox) => {
+            checkbox.checked = selectAllStudents.checked;
+        });
+    });
+    studentCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", () => {
+            selectAllStudents.checked = studentCheckboxes.every((item) => item.checked);
+            selectAllStudents.indeterminate = studentCheckboxes.some((item) => item.checked)
+                && !selectAllStudents.checked;
+        });
+    });
 }
 
 document.querySelectorAll("form[data-confirm-message], form[data-confirm-edit]").forEach((form) => {

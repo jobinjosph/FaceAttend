@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Student placement | FaceAttend{% endblock %}
+{% block content %}
+<section class="dashboard-section"><div class="container form-container">
+    <span class="section-kicker">Admin · Students</span>
+    <h1>Promote or transfer students</h1>
+    <p>Move students from {{ source.course_code }} · {{ source.academic_year }} · Semester {{ source.semester_number }} · Section {{ source.section }} to another active academic group.</p>
+
+    {% for error in errors or [] %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endfor %}
+
+    <form method="post" class="student-form-card" data-placement-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="semester_id" value="{{ source.id }}">
+        <div class="form-field">
+            <label for="destination_semester_id">Destination group</label>
+            <select id="destination_semester_id" name="destination_semester_id" required>
+                <option value="">Select destination</option>
+                {% for item in contexts if item.id != source.id %}<option value="{{ item.id }}" {{ 'selected' if destination_id == item.id }}>{{ item.course_code }} — {{ item.course_name }} · {{ item.academic_year }} · Semester {{ item.semester_number }} · Section {{ item.section }}</option>{% endfor %}
+            </select>
+        </div>
+
+        <div class="table-card"><div class="table-scroll"><table class="data-table">
+            <thead><tr><th><input type="checkbox" aria-label="Select all students" data-select-all-students></th><th>Register number</th><th>Student</th><th>Status</th></tr></thead>
+            <tbody>{% for student in students %}<tr>
+                <td><input type="checkbox" name="student_id" value="{{ student.id }}" aria-label="Select {{ student.full_name }}" {{ 'checked' if student.id in selected_ids }}></td>
+                <td><strong>{{ student.register_number }}</strong></td><td>{{ student.full_name }}<small>{{ student.email }}</small></td>
+                <td><span class="status-badge {{ 'active' if student.is_active else 'inactive' }}">{{ 'Active' if student.is_active else 'Inactive' }}</span></td>
+            </tr>{% else %}<tr><td colspan="4">No students are currently in this group.</td></tr>{% endfor %}</tbody>
+        </table></div></div>
+
+        <p><strong>Important:</strong> Existing attendance records remain in their original classes. This only changes each student’s current placement.</p>
+        <div class="form-actions"><a class="button cancel-button" href="{{ url_for('admin_students.student_list', semester_id=source.id) }}">Cancel</a><button class="button primary" type="submit" {{ 'disabled' if not students }}>Move selected students</button></div>
+    </form>
+</div></section>
+{% endblock %}

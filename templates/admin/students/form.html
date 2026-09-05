@@ -66,84 +66,46 @@
                 </div>
 
                 <div class="form-field">
-                    <label id="course_label">Course</label>
-                    {% set selected_course = namespace(label='Select course') %}
-                    {% for course in courses %}
-                        {% if student.get('course_id')|string == course.id|string %}
-                            {% set selected_course.label = course.code ~ ' — ' ~ course.name %}
-                        {% endif %}
-                    {% endfor %}
-
-                    <div class="course-combobox" data-course-combobox>
-                        <input
-                            id="course_id"
-                            name="course_id"
-                            type="hidden"
-                            value="{{ student.get('course_id', '') }}"
-                        >
-                        <button
-                            class="course-combobox-button"
-                            type="button"
-                            aria-labelledby="course_label course_selected_label"
-                            aria-haspopup="listbox"
-                            aria-expanded="false"
-                            aria-controls="course_options"
-                        >
-                            <span id="course_selected_label">{{ selected_course.label }}</span>
-                            <span aria-hidden="true">⌄</span>
-                        </button>
-
-                        <div class="course-combobox-menu" id="course_options" role="listbox" hidden>
-                            <div class="course-search-wrap">
-                                <input
-                                    class="course-search"
-                                    type="search"
-                                    placeholder="Search programmes..."
-                                    aria-label="Search programmes"
-                                    autocomplete="off"
-                                >
-                            </div>
-                            <div class="course-option-list">
-                                {% for course in courses %}
-                                    <button
-                                        class="course-option"
-                                        type="button"
-                                        role="option"
-                                        data-value="{{ course.id }}"
-                                        data-label="{{ course.code }} — {{ course.name }}"
-                                        aria-selected="{{ 'true' if student.get('course_id')|string == course.id|string else 'false' }}"
-                                    >
-                                        <strong>{{ course.code }}</strong>
-                                        <span>{{ course.name }}</span>
-                                    </button>
-                                {% endfor %}
-                                <p class="course-no-results" hidden>No matching programme found.</p>
-                            </div>
-                        </div>
-                    </div>
+                    <label for="course_id">Programme</label>
+                    <select id="course_id" name="course_id" required>
+                        <option value="">Select programme</option>
+                        {% set programme_ids = [] %}
+                        {% for item in contexts %}{% if item.course_id not in programme_ids %}
+                            <option value="{{ item.course_id }}" {{ 'selected' if context and context.course_id == item.course_id }}>{{ item.course_code }} — {{ item.course_name }}</option>
+                            {% set _ = programme_ids.append(item.course_id) %}
+                        {% endif %}{% endfor %}
+                    </select>
                     {% if errors.get('course_id') %}<small class="field-error">{{ errors.course_id }}</small>{% endif %}
                 </div>
 
                 <div class="form-field">
-                    <label for="semester_id">Semester</label>
-                    <select id="semester_id" name="semester_id" required>
+                    <label for="student_academic_year">Academic year</label>
+                    <select id="student_academic_year" required>
+                        <option value="">Select academic year</option>
+                        {% for item in contexts %}<option value="{{ item.academic_year }}" data-course-id="{{ item.course_id }}" {{ 'selected' if context and context.academic_year == item.academic_year }}>{{ item.academic_year }}</option>{% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="student_semester_number">Semester</label>
+                    <select id="student_semester_number" required>
                         <option value="">Select semester</option>
-                        {% for semester in semesters %}
-                            <option
-                                value="{{ semester.id }}"
-                                data-course-id="{{ semester.course_id }}"
-                                {% if student.get('semester_id')|string == semester.id|string %}selected{% endif %}
-                            >
-                                Semester {{ semester.semester_number }}
-                            </option>
-                        {% endfor %}
+                        {% for item in contexts %}<option value="{{ item.semester_number }}" data-course-id="{{ item.course_id }}" data-academic-year="{{ item.academic_year }}" {{ 'selected' if context and context.semester_number == item.semester_number }}>Semester {{ item.semester_number }}</option>{% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="semester_id">Section</label>
+                    <select id="semester_id" name="semester_id" required>
+                        <option value="">Select section</option>
+                        {% for item in contexts %}<option value="{{ item.id }}" data-course-id="{{ item.course_id }}" data-academic-year="{{ item.academic_year }}" data-semester-number="{{ item.semester_number }}" {{ 'selected' if context and context.id == item.id }}>Section {{ item.section }}</option>{% endfor %}
                     </select>
                     {% if errors.get('semester_id') %}<small class="field-error">{{ errors.semester_id }}</small>{% endif %}
                 </div>
             </div>
 
             <div class="form-actions">
-                <a class="button cancel-button" href="{{ url_for('admin_students.student_list') }}">Cancel</a>
+                <a class="button cancel-button" href="{{ url_for('admin_students.student_list', semester_id=context.id if context) }}">Cancel</a>
                 <button class="button primary form-submit" type="submit">
                     {{ 'Save changes' if is_edit else 'Add student' }}
                 </button>

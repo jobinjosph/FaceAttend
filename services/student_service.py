@@ -59,7 +59,7 @@ def validate_student_data(data, require_password=False):
     return errors
 
 
-def list_students():
+def list_students(semester_id):
     query = """
         SELECT s.id, s.user_id, s.register_number, s.full_name, s.email,
                s.face_registered, s.is_active,
@@ -68,9 +68,10 @@ def list_students():
         FROM students s
         JOIN courses c ON c.id = s.course_id
         JOIN semesters sem ON sem.id = s.semester_id
+        WHERE s.semester_id = %s
         ORDER BY s.full_name, s.register_number
     """
-    return _fetch_all(query)
+    return _fetch_all(query, (semester_id,))
 
 
 def get_student(student_id):
@@ -83,21 +84,12 @@ def get_student(student_id):
     return _fetch_one(query, (student_id,))
 
 
-def get_academic_options():
-    courses = _fetch_all("SELECT id, code, name FROM courses ORDER BY code")
-    semesters = _fetch_all(
-        """
-        SELECT id, course_id, semester_number, section, academic_year
-        FROM semesters
-        ORDER BY course_id, semester_number, section
-        """
-    )
-    return courses, semesters
-
-
-def semester_belongs_to_course(semester_id, course_id):
+def active_semester_belongs_to_course(semester_id, course_id):
     result = _fetch_one(
-        "SELECT id FROM semesters WHERE id = %s AND course_id = %s",
+        """SELECT sem.id FROM semesters sem
+           JOIN courses c ON c.id=sem.course_id
+           WHERE sem.id=%s AND sem.course_id=%s
+             AND sem.is_active=TRUE AND c.is_active=TRUE""",
         (semester_id, course_id),
     )
     return result is not None
@@ -220,6 +212,62 @@ def set_student_active(student_id, is_active):
                 (bool(is_active), student["user_id"]),
             )
         connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def move_students(student_ids, source_semester_id, destination_semester_id, moved_by_user_id):
+    student_ids = list(dict.fromkeys(student_ids))
+    if not student_ids:
+        raise ValueError("Select at least one student.")
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    placeholders = ", ".join(["%s"] * len(student_ids))
+    try:
+        cursor.execute(
+            """SELECT sem.id, sem.course_id FROM semesters sem
+               JOIN courses c ON c.id=sem.course_id
+               WHERE sem.id=%s AND sem.is_active=TRUE AND c.is_active=TRUE
+               FOR UPDATE""",
+            (destination_semester_id,),
+        )
+        destination = cursor.fetchone()
+        if destination is None:
+            raise ValueError("The selected destination is not active.")
+        if destination_semester_id == source_semester_id:
+            raise ValueError("Select a destination different from the current group.")
+
+        cursor.execute(
+            f"SELECT id, semester_id FROM students WHERE id IN ({placeholders}) FOR UPDATE",
+            tuple(student_ids),
+        )
+        selected_students = cursor.fetchall()
+        if len(selected_students) != len(student_ids):
+            raise ValueError("One or more selected students no longer exist.")
+        if any(item["semester_id"] != source_semester_id for item in selected_students):
+            raise ValueError("One or more selected students are no longer in this group. Refresh and try again.")
+
+        history_rows = [
+            (item["id"], source_semester_id, destination_semester_id, moved_by_user_id)
+            for item in selected_students
+        ]
+        cursor.executemany(
+            """INSERT INTO student_placement_history
+                   (student_id, from_semester_id, to_semester_id, moved_by_user_id)
+               VALUES (%s, %s, %s, %s)""",
+            history_rows,
+        )
+        cursor.execute(
+            f"UPDATE students SET course_id=%s, semester_id=%s WHERE id IN ({placeholders})",
+            (destination["course_id"], destination_semester_id, *student_ids),
+        )
+        connection.commit()
+        return len(student_ids)
     except Exception:
         connection.rollback()
         raise
