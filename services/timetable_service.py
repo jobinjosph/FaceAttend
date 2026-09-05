@@ -4,21 +4,6 @@ from db import get_db_connection
 
 
 DAYS = {1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday"}
-TIMETABLE_PROGRAMMES = ("BCA", "BCOM", "LLMCAL", "LLMIPRTL", "MAENG", "MAMC", "MAPPI", "MCA")
-
-def list_timetable_contexts():
-    placeholders=", ".join(["%s"]*len(TIMETABLE_PROGRAMMES))
-    return _fetch_all(f"""SELECT sem.id,sem.semester_number,sem.section,sem.academic_year,c.code course_code,c.name course_name
-        FROM semesters sem JOIN courses c ON c.id=sem.course_id WHERE c.code IN ({placeholders})
-        ORDER BY FIELD(c.code,{placeholders}),sem.academic_year DESC,sem.semester_number,sem.section""",TIMETABLE_PROGRAMMES+TIMETABLE_PROGRAMMES)
-
-def get_timetable_context(semester_id=None):
-    if semester_id:
-        return _fetch_one("""SELECT sem.id,sem.semester_number,sem.section,sem.academic_year,c.code course_code,c.name course_name
-            FROM semesters sem JOIN courses c ON c.id=sem.course_id WHERE sem.id=%s""",(semester_id,))
-    return _fetch_one("""SELECT sem.id,sem.semester_number,sem.section,sem.academic_year,c.code course_code,c.name course_name
-        FROM semesters sem JOIN courses c ON c.id=sem.course_id WHERE c.code='MCA' AND sem.semester_number=3
-        ORDER BY sem.academic_year DESC,sem.section LIMIT 1""")
 
 
 def normalize_period_data(form_data):
@@ -58,48 +43,35 @@ def validate_period_data(data):
     return errors
 
 
-def get_assignment_options(semester_id=None):
+def get_assignment_options(semester_id):
     return _fetch_all(
         """
         SELECT a.id, s.subject_code, s.subject_name, f.employee_code, f.full_name
         FROM faculty_subject_assignments a
         JOIN subjects s ON s.id = a.subject_id
-        JOIN semesters sem ON sem.id = s.semester_id
-        JOIN courses c ON c.id = sem.course_id
         JOIN faculty f ON f.id = a.faculty_id
-        WHERE ((%s IS NULL AND c.code='MCA' AND sem.semester_number=3) OR sem.id=%s)
+        WHERE s.semester_id=%s
           AND s.is_active = TRUE AND f.is_active = TRUE
         ORDER BY s.subject_code, f.full_name
-        """, (semester_id,semester_id)
+        """, (semester_id,)
     )
 
 
-def get_assignment(assignment_id, semester_id=None):
+def get_assignment(assignment_id, semester_id):
     return _fetch_one(
         """
         SELECT a.id, a.subject_id, a.faculty_id, s.semester_id
         FROM faculty_subject_assignments a
         JOIN subjects s ON s.id = a.subject_id
-        JOIN semesters sem ON sem.id = s.semester_id
-        JOIN courses c ON c.id = sem.course_id
         JOIN faculty f ON f.id = a.faculty_id
-        WHERE a.id=%s AND ((%s IS NULL AND c.code='MCA' AND sem.semester_number=3) OR sem.id=%s)
+        WHERE a.id=%s AND s.semester_id=%s
           AND s.is_active = TRUE AND f.is_active = TRUE
         """,
-        (assignment_id,semester_id,semester_id),
+        (assignment_id,semester_id),
     )
 
 
-def get_mca_semester_three():
-    return _fetch_one(
-        """SELECT sem.id AS semester_id FROM semesters sem
-           JOIN courses c ON c.id = sem.course_id
-           WHERE c.code = 'MCA' AND sem.semester_number = 3
-           ORDER BY sem.academic_year DESC LIMIT 1"""
-    )
-
-
-def list_periods(semester_id=None):
+def list_periods(semester_id):
     return _fetch_all(
         """
         SELECT tp.id, tp.day_of_week, tp.period_number,
@@ -111,14 +83,12 @@ def list_periods(semester_id=None):
                a.id AS assignment_id
         FROM timetable_periods tp
         LEFT JOIN subjects s ON s.id = tp.subject_id
-        JOIN semesters sem ON sem.id = tp.semester_id
-        JOIN courses c ON c.id = sem.course_id
         LEFT JOIN faculty f ON f.id = tp.faculty_id
         LEFT JOIN faculty_subject_assignments a
           ON a.subject_id = tp.subject_id AND a.faculty_id = tp.faculty_id
-        WHERE ((%s IS NULL AND c.code='MCA' AND sem.semester_number=3) OR sem.id=%s)
+        WHERE tp.semester_id=%s
         ORDER BY tp.day_of_week, tp.period_number, tp.start_time
-        """, (semester_id,semester_id)
+        """, (semester_id,)
     )
 
 
