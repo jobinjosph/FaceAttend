@@ -4,7 +4,7 @@ import io
 from flask import Blueprint, Response, abort, render_template, request, session
 
 from decorators.auth import role_required
-from services import pdf_service, report_service, timetable_service
+from services import academic_context_service, pdf_service, report_service
 
 
 attendance_reports_bp = Blueprint("attendance_reports", __name__, url_prefix="/reports/attendance")
@@ -14,15 +14,18 @@ attendance_reports_bp = Blueprint("attendance_reports", __name__, url_prefix="/r
 @role_required("ADMIN", "FACULTY")
 def attendance_report():
     filters, errors = report_service.normalize_cohort_filters(request.args)
-    context, programmes, semester_options = _load_admin_context(filters)
-    report = report_service.get_cohort_report(session["user_id"], session["role"], filters)
+    context, selector = _load_admin_context(filters)
+    if session["role"] == "ADMIN" and context is None:
+        report = report_service.build_cohort_report([], [], [])
+    else:
+        report = report_service.get_cohort_report(session["user_id"], session["role"], filters)
     if report is None:
         return render_template("reports/report_unavailable.html"), 404
     return render_template(
         "reports/attendance_report.html", report=report, filters=filters, errors=errors,
         dashboard_endpoint=_dashboard_endpoint(),
         month_options=report_service.get_month_options(filters),
-        context=context, programmes=programmes, semester_options=semester_options,
+        context=context, selector=selector,
     ), 400 if errors else 200
 
 
@@ -83,8 +86,9 @@ def _load_export_report():
     filters, errors = report_service.normalize_cohort_filters(request.args)
     if errors:
         abort(400)
-    if session["role"] == "ADMIN" and filters.get("semester_id"):
-        if timetable_service.get_timetable_context(filters["semester_id"]) is None:
+    if session["role"] == "ADMIN":
+        context, _ = _load_admin_context(filters)
+        if context is None:
             abort(404)
     report = report_service.get_cohort_report(session["user_id"], session["role"], filters)
     if report is None:
@@ -94,34 +98,21 @@ def _load_export_report():
 
 def _load_admin_context(filters):
     if session["role"] != "ADMIN":
-        return None, [], []
-    contexts = timetable_service.list_timetable_contexts()
+        return None, {"programmes": [], "academic_years": [], "semesters": [], "sections": []}
+    contexts = academic_context_service.list_active_contexts()
     semester_id = filters.get("semester_id")
-    selected_programme = request.args.get("programme", "").strip().upper()
-    selected_semester = request.args.get("semester", type=int)
-    if not semester_id and selected_programme:
-        matching = [item for item in contexts if item["course_code"] == selected_programme]
-        context = next(
-            (item for item in matching if item["semester_number"] == selected_semester),
-            matching[0] if matching else None,
-        )
-        semester_id = context["id"] if context else None
-        filters["semester_id"] = semester_id
-    else:
-        context = timetable_service.get_timetable_context(semester_id)
-    if semester_id is not None and context is None:
+    context = academic_context_service.resolve_context(
+        contexts, semester_id=semester_id,
+        programme=request.args.get("programme", ""),
+        academic_year=request.args.get("academic_year", ""),
+        semester=request.args.get("semester", type=int),
+        section=request.args.get("section", ""),
+    )
+    if context is None and (semester_id is not None or request.args.get("programme")):
         abort(404)
     if context:
         filters["semester_id"] = context["id"]
-    programmes = []
-    for item in contexts:
-        if not any(programme["code"] == item["course_code"] for programme in programmes):
-            programmes.append({"code": item["course_code"], "name": item["course_name"]})
-    semester_options = [
-        item for item in contexts
-        if context and item["course_code"] == context["course_code"]
-    ]
-    return context, programmes, semester_options
+    return context, academic_context_service.build_selector_options(contexts, context)
 
 
 def _dashboard_endpoint():

@@ -5,10 +5,8 @@
     <div class="page-heading-row"><div><span class="section-kicker">{{ session.role|title }} · Reports</span><h1>Attendance Reports</h1><p>{% if report.faculty %}Only classes handled by {{ report.faculty.full_name }} are included.{% else %}Review confirmed attendance across all faculty and subjects.{% endif %}</p></div><div class="report-export-actions"><a class="apple-shop-button apple-shop-button-grey" href="{{ url_for('attendance_reports.export_csv', **filters) }}">Export CSV</a><a class="apple-shop-button" href="{{ url_for('attendance_reports.export_pdf', **filters) }}">Export PDF</a></div></div>
 
     {% if session.role == 'ADMIN' %}
-    <form class="list-filter-form timetable-context-filters" method="get">
-        <div class="form-field"><label for="programme">Programme</label><select id="programme" name="programme" onchange="this.form.submit()">{% for programme in programmes %}<option value="{{ programme.code }}" {{ 'selected' if context and context.course_code==programme.code }}>{{ programme.code }} — {{ programme.name }}</option>{% endfor %}</select></div>
-        <div class="form-field"><label for="semester">Semester</label><select id="semester" name="semester" onchange="this.form.submit()">{% for option in semester_options %}<option value="{{ option.semester_number }}" {{ 'selected' if context and context.id==option.id }}>Semester {{ option.semester_number }}</option>{% endfor %}</select></div>
-    </form>
+    {% include "admin/_academic_context_selector.html" %}
+    {% if context %}<p>{{ context.course_code }} · {{ context.academic_year }} · Semester {{ context.semester_number }} · Section {{ context.section }}</p>{% else %}<p>No active semester groups are configured. Add one in Academic Structure first.</p>{% endif %}
     {% endif %}
 
     <form class="report-filter-card cohort-report-filters" method="get">

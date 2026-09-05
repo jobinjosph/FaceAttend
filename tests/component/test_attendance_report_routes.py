@@ -21,19 +21,17 @@ def sample_cohort_report(faculty=None):
 
 def academic_contexts():
     return [
-        {"id": 3, "course_code": "MCA", "course_name": "Master of Computer Applications", "semester_number": 3},
-        {"id": 22, "course_code": "BCA", "course_name": "Bachelor of Computer Applications", "semester_number": 2},
+        {"id": 3, "course_code": "MCA", "course_name": "Master of Computer Applications", "semester_number": 3, "academic_year": "2026-27", "section": "A"},
+        {"id": 22, "course_code": "BCA", "course_name": "Bachelor of Computer Applications", "semester_number": 2, "academic_year": "2026-27", "section": "A"},
     ]
 
 
 def mock_academic_context(monkeypatch):
     contexts = academic_contexts()
-    monkeypatch.setattr("services.timetable_service.list_timetable_contexts", lambda: contexts)
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", lambda: contexts)
     monkeypatch.setattr(
-        "services.timetable_service.get_timetable_context",
-        lambda semester_id=None: next(
-            (item for item in contexts if item["id"] == semester_id), contexts[0] if semester_id is None else None,
-        ),
+        "services.academic_context_service.get_active_context",
+        lambda semester_id: next((item for item in contexts if item["id"] == semester_id), None),
     )
 
 
@@ -82,6 +80,7 @@ def test_unlinked_faculty_receives_helpful_report_message(client, monkeypatch):
 @pytest.mark.component
 def test_report_exports_csv_and_pdf(client, monkeypatch):
     login(client, "ADMIN")
+    mock_academic_context(monkeypatch)
     monkeypatch.setattr("services.report_service.get_cohort_report", lambda *args: sample_cohort_report())
     csv_response = client.get("/reports/attendance/export.csv")
     pdf_response = client.get("/reports/attendance/export.pdf")
@@ -115,3 +114,59 @@ def test_invalid_admin_report_semester_returns_404(client, monkeypatch):
 
     assert client.get("/reports/attendance?semester_id=999").status_code == 404
     assert client.get("/reports/attendance/export.csv?semester_id=999").status_code == 404
+
+
+@pytest.mark.component
+@pytest.mark.parametrize("year,section,expected", [("2026-27", "A", 41), ("2026-27", "C", 42), ("2027-28", "C", 43)])
+def test_report_selector_separates_years_and_sections(client, monkeypatch, year, section, expected):
+    login(client, "ADMIN")
+    contexts = [dict(id=identifier, course_code="NEW", course_name="New Programme",
+                     semester_number=6, academic_year=academic_year, section=group)
+                for identifier, academic_year, group in [(41, "2026-27", "A"), (42, "2026-27", "C"), (43, "2027-28", "C")]]
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", lambda: contexts)
+    captured = []
+    monkeypatch.setattr(
+        "services.report_service.get_cohort_report",
+        lambda user_id, role, filters: captured.append(filters["semester_id"]) or sample_cohort_report(),
+    )
+
+    response = client.get(f"/reports/attendance?programme=NEW&academic_year={year}&semester=6&section={section}")
+
+    assert response.status_code == 200
+    assert captured == [expected]
+    for field in ["programme", "academic_year", "semester", "section"]:
+        assert f'name="{field}"'.encode() in response.data
+    assert f'name="semester_id" value="{expected}"'.encode() in response.data
+    assert f"semester_id={expected}".encode() in response.data
+
+
+@pytest.mark.component
+def test_admin_exports_are_scoped_to_selected_group(client, monkeypatch):
+    login(client, "ADMIN")
+    mock_academic_context(monkeypatch)
+    captured = []
+    monkeypatch.setattr(
+        "services.report_service.get_cohort_report",
+        lambda user_id, role, filters: captured.append(filters["semester_id"]) or sample_cohort_report(),
+    )
+
+    assert client.get("/reports/attendance/export.csv?semester_id=22").status_code == 200
+    assert client.get("/reports/attendance/export.pdf?semester_id=22").status_code == 200
+    assert captured == [22, 22]
+
+
+@pytest.mark.component
+def test_no_groups_does_not_load_or_export_college_wide_data(client, monkeypatch):
+    login(client, "ADMIN")
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", lambda: [])
+    def unexpected(*args):
+        pytest.fail("No group must not load an unscoped admin report")
+    monkeypatch.setattr("services.report_service.get_cohort_report", unexpected)
+
+    response = client.get("/reports/attendance")
+
+    assert response.status_code == 200
+    assert b"No active semester groups" in response.data
+    assert b"No confirmed attendance found" in response.data
+    assert client.get("/reports/attendance/export.csv").status_code == 404
+    assert client.get("/reports/attendance/export.pdf").status_code == 404

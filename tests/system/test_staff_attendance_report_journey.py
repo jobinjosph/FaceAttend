@@ -15,12 +15,8 @@ def test_staff_opens_dashboard_views_filters_and_exports_report(
     monkeypatch.setattr("services.report_service.get_cohort_report", lambda *args: sample_cohort_report(faculty))
     if role == "ADMIN":
         monkeypatch.setattr(
-            "services.timetable_service.list_timetable_contexts",
-            lambda: [{"id": 3, "course_code": "MCA", "course_name": "Master of Computer Applications", "semester_number": 3}],
-        )
-        monkeypatch.setattr(
-            "services.timetable_service.get_timetable_context",
-            lambda semester_id=None: {"id": 3, "course_code": "MCA", "course_name": "Master of Computer Applications", "semester_number": 3},
+            "services.academic_context_service.list_active_contexts",
+            lambda: [{"id": 3, "course_code": "MCA", "course_name": "Master of Computer Applications", "semester_number": 3, "academic_year": "2026-27", "section": "A"}],
         )
     with client.session_transaction() as user_session:
         user_session.update(user_id=7, full_name="Report User", role=role)
