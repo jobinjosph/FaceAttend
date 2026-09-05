@@ -4,10 +4,8 @@
 <section class="dashboard-section"><div class="container">
     <div class="page-heading-row"><div><span class="section-kicker">Admin · Academic setup</span><h1>Faculty–subject assignments</h1><p>Connect faculty members to subjects across programmes and semesters.</p></div><a class="apple-shop-button" href="{{ url_for('admin_assignments.add_assignment', semester_id=context.id if context) }}">Assign faculty</a></div>
     {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert alert-{{ category }}" role="alert">{{ message }}</div>{% endfor %}{% endwith %}
-    <form class="list-filter-form timetable-context-filters" method="get">
-        <label class="form-field" for="programme">Programme<select id="programme" name="programme" onchange="this.form.submit()">{% for item in programmes %}<option value="{{ item.code }}" {{ 'selected' if context and item.code == context.course_code }}>{{ item.code }} — {{ item.name }}</option>{% endfor %}</select></label>
-        <label class="form-field" for="semester">Semester<select id="semester" name="semester" onchange="this.form.submit()">{% for item in semester_options %}<option value="{{ item.semester_number }}" {{ 'selected' if context and item.id == context.id }}>Semester {{ item.semester_number }}{% if item.section != 'A' %} — Section {{ item.section }}{% endif %}</option>{% endfor %}</select></label>
-    </form>
+    {% include "admin/_academic_context_selector.html" %}
+    {% if context %}<p>{{ context.course_code }} · {{ context.academic_year }} · Semester {{ context.semester_number }} · Section {{ context.section }}</p>{% else %}<p>No active semester groups are configured. Add one in Academic Structure first.</p>{% endif %}
     <div class="table-card">
     {% if assignments %}<div class="table-scroll"><table class="data-table"><thead><tr><th>Subject code</th><th>Subject</th><th>Faculty member</th><th>Employee code</th><th>Action</th></tr></thead><tbody>
     {% for assignment in assignments %}<tr><td><strong>{{ assignment.subject_code }}</strong></td><td>{{ assignment.subject_name }}</td><td>{{ assignment.full_name }}<small>{{ assignment.email }}</small></td><td>{{ assignment.employee_code }}</td><td class="table-actions"><form method="post" action="{{ url_for('admin_assignments.remove_assignment', assignment_id=assignment.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Remove</button></form></td></tr>{% endfor %}

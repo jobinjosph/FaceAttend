@@ -30,10 +30,10 @@ def list_assignments(semester_id=None):
         JOIN semesters sem ON sem.id = s.semester_id
         JOIN courses c ON c.id = sem.course_id
         JOIN faculty f ON f.id = a.faculty_id
-        WHERE ((%s IS NULL AND c.code = 'MCA' AND sem.semester_number = 3) OR sem.id = %s)
+        WHERE sem.id = %s
         ORDER BY s.subject_code, f.full_name
         """,
-        (semester_id, semester_id),
+        (semester_id,),
     )
 
 
@@ -44,11 +44,11 @@ def get_assignment_options(semester_id=None):
         FROM subjects s
         JOIN semesters sem ON sem.id = s.semester_id
         JOIN courses c ON c.id = sem.course_id
-        WHERE ((%s IS NULL AND c.code = 'MCA' AND sem.semester_number = 3) OR sem.id = %s)
+        WHERE sem.id = %s
           AND s.is_active = TRUE
         ORDER BY s.subject_code
         """,
-        (semester_id, semester_id),
+        (semester_id,),
     )
     faculty = _fetch_all(
         """
@@ -69,9 +69,9 @@ def active_subject_exists(subject_id, semester_id=None):
         JOIN semesters sem ON sem.id = s.semester_id
         JOIN courses c ON c.id = sem.course_id
         WHERE s.id = %s AND s.is_active = TRUE
-          AND ((%s IS NULL AND c.code = 'MCA' AND sem.semester_number = 3) OR sem.id = %s)
+          AND sem.id = %s
         """,
-        (subject_id, semester_id, semester_id),
+        (subject_id, semester_id),
     ) is not None
 
 

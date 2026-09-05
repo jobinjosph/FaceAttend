@@ -35,7 +35,8 @@ def test_assignment_list_is_scoped_to_selected_semester(monkeypatch):
     assignment_service.list_assignments(22)
 
     assert "sem.id = %s" in captured["query"]
-    assert captured["params"] == (22, 22)
+    assert captured["params"] == (22,)
+    assert "MCA" not in captured["query"]
 
 
 @pytest.mark.unit
@@ -50,4 +51,5 @@ def test_assignment_subject_validation_is_scoped_to_selected_semester(monkeypatc
 
     assert assignment_service.active_subject_exists(30, 22) is True
     assert "sem.id = %s" in captured["query"]
-    assert captured["params"] == (30, 22, 22)
+    assert captured["params"] == (30, 22)
+    assert "MCA" not in captured["query"]

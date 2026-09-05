@@ -2,12 +2,22 @@ import mysql.connector
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def academic_context(monkeypatch):
+    context = {"id": 3, "course_code": "MCA", "course_name": "Master of Computer Applications",
+               "semester_number": 3, "section": "A", "academic_year": "2026-27"}
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", lambda: [context])
+    monkeypatch.setattr("services.academic_context_service.get_active_context",
+                        lambda semester_id: context if semester_id == 3 else None)
+
+
+
 def login_admin(client):
     with client.session_transaction() as session:
         session.update(user_id=1, full_name="Admin", role="ADMIN")
 
 
-def options():
+def options(semester_id=None):
     return ([{"id": 3, "subject_code": "CC431", "subject_name": "Cloud Computing"}], [{"id": 8, "employee_code": "FC01", "full_name": "Faculty"}])
 
 
@@ -15,7 +25,7 @@ def options():
 def test_admin_assigns_active_faculty_to_active_subject(client, monkeypatch):
     login_admin(client)
     captured = {}
-    monkeypatch.setattr("services.assignment_service.active_subject_exists", lambda subject_id: True)
+    monkeypatch.setattr("services.assignment_service.active_subject_exists", lambda subject_id, semester_id: True)
     monkeypatch.setattr("services.assignment_service.active_faculty_exists", lambda faculty_id: True)
     monkeypatch.setattr("services.assignment_service.create_assignment", lambda data: captured.update(data) or 1)
     response = client.post("/admin/faculty-subjects/add", data={"subject_id": "3", "faculty_id": "8"})
@@ -26,7 +36,7 @@ def test_admin_assigns_active_faculty_to_active_subject(client, monkeypatch):
 @pytest.mark.integration
 def test_inactive_subject_cannot_be_assigned(client, monkeypatch):
     login_admin(client)
-    monkeypatch.setattr("services.assignment_service.active_subject_exists", lambda subject_id: False)
+    monkeypatch.setattr("services.assignment_service.active_subject_exists", lambda subject_id, semester_id: False)
     monkeypatch.setattr("services.assignment_service.get_assignment_options", options)
     response = client.post("/admin/faculty-subjects/add", data={"subject_id": "3", "faculty_id": "8"})
     assert response.status_code == 400
@@ -36,7 +46,7 @@ def test_inactive_subject_cannot_be_assigned(client, monkeypatch):
 @pytest.mark.integration
 def test_inactive_faculty_cannot_be_assigned(client, monkeypatch):
     login_admin(client)
-    monkeypatch.setattr("services.assignment_service.active_subject_exists", lambda subject_id: True)
+    monkeypatch.setattr("services.assignment_service.active_subject_exists", lambda subject_id, semester_id: True)
     monkeypatch.setattr("services.assignment_service.active_faculty_exists", lambda faculty_id: False)
     monkeypatch.setattr("services.assignment_service.get_assignment_options", options)
     response = client.post("/admin/faculty-subjects/add", data={"subject_id": "3", "faculty_id": "8"})
@@ -47,7 +57,7 @@ def test_inactive_faculty_cannot_be_assigned(client, monkeypatch):
 @pytest.mark.integration
 def test_duplicate_assignment_is_rejected(client, monkeypatch):
     login_admin(client)
-    monkeypatch.setattr("services.assignment_service.active_subject_exists", lambda subject_id: True)
+    monkeypatch.setattr("services.assignment_service.active_subject_exists", lambda subject_id, semester_id: True)
     monkeypatch.setattr("services.assignment_service.active_faculty_exists", lambda faculty_id: True)
     monkeypatch.setattr("services.assignment_service.get_assignment_options", options)
     def duplicate(data):
@@ -66,7 +76,7 @@ def test_admin_assigns_faculty_inside_selected_non_mca_semester(client, monkeypa
         "semester_number": 2, "section": "A", "academic_year": "2026-27",
     }
     captured = {}
-    monkeypatch.setattr("services.timetable_service.get_timetable_context", lambda semester_id: context)
+    monkeypatch.setattr("services.academic_context_service.get_active_context", lambda semester_id: context)
     monkeypatch.setattr(
         "services.assignment_service.active_subject_exists",
         lambda subject_id, semester_id: (subject_id, semester_id) == (30, 22),
@@ -91,7 +101,7 @@ def test_subject_from_another_semester_cannot_be_assigned(client, monkeypatch):
         "id": 22, "course_code": "BCA", "course_name": "Bachelor of Computer Applications",
         "semester_number": 2, "section": "A", "academic_year": "2026-27",
     }
-    monkeypatch.setattr("services.timetable_service.get_timetable_context", lambda semester_id: context)
+    monkeypatch.setattr("services.academic_context_service.get_active_context", lambda semester_id: context)
     monkeypatch.setattr("services.assignment_service.active_subject_exists", lambda subject_id, semester_id: False)
     monkeypatch.setattr("services.assignment_service.get_assignment_options", lambda semester_id: options())
 
