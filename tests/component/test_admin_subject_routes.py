@@ -1,6 +1,22 @@
 import pytest
 
 
+CONTEXT = {
+    "id": 3, "course_id": 1, "course_code": "MCA",
+    "course_name": "Master of Computer Applications", "academic_year": "2026-27",
+    "semester_number": 3, "section": "A",
+}
+
+
+@pytest.fixture(autouse=True)
+def mock_academic_context(monkeypatch):
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", lambda: [CONTEXT])
+    monkeypatch.setattr(
+        "services.academic_context_service.get_active_context",
+        lambda semester_id: CONTEXT if semester_id == 3 else None,
+    )
+
+
 def login_as(client, role):
     with client.session_transaction() as user_session:
         user_session["user_id"] = 1
@@ -24,11 +40,12 @@ def test_non_admin_cannot_manage_subjects(client, role):
 
 
 @pytest.mark.component
-def test_admin_can_list_semester_three_subjects(client, monkeypatch):
+def test_admin_can_list_subjects_in_selected_academic_group(client, monkeypatch):
     login_as(client, "ADMIN")
-    monkeypatch.setattr("services.subject_service.list_semester_three_subjects", lambda search, status: [{
+    monkeypatch.setattr("services.subject_service.list_subjects", lambda search, status, semester_id: [{
         "id": 1, "subject_code": "CC431", "subject_name": "Cloud Computing",
         "activity_type": "LECTURE", "is_active": True, "semester_number": 3,
+        "course_code": "MCA", "academic_year": "2026-27", "section": "A",
     }])
     response = client.get("/admin/subjects")
     assert response.status_code == 200
@@ -51,7 +68,6 @@ def test_invalid_subject_form_displays_errors(client):
 @pytest.mark.component
 def test_admin_can_add_subject(client, monkeypatch):
     login_as(client, "ADMIN")
-    monkeypatch.setattr("services.subject_service.get_mca_semester_three", lambda: {"id": 3})
     created = {}
     monkeypatch.setattr("services.subject_service.create_subject", lambda data, semester_id: created.update(data=data, semester_id=semester_id) or 10)
     response = client.post("/admin/subjects/add", data={
@@ -85,7 +101,7 @@ def test_admin_can_deactivate_subject(client, monkeypatch):
 @pytest.mark.parametrize("method", ["get", "post"])
 def test_invalid_subject_semester_context_returns_404(client, monkeypatch, method):
     login_as(client, "ADMIN")
-    monkeypatch.setattr("services.timetable_service.get_timetable_context", lambda semester_id: None)
+    monkeypatch.setattr("services.academic_context_service.get_active_context", lambda semester_id: None)
     request_method = getattr(client, method)
 
     response = request_method(
@@ -99,3 +115,34 @@ def test_invalid_subject_semester_context_returns_404(client, monkeypatch, metho
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.component
+def test_manage_subjects_selects_exact_non_mca_academic_group(client, monkeypatch):
+    login_as(client, "ADMIN")
+    contexts = [
+        CONTEXT,
+        {
+            "id": 22, "course_id": 2, "course_code": "BCA",
+            "course_name": "Bachelor of Computer Applications",
+            "academic_year": "2027-28", "semester_number": 2, "section": "C",
+        },
+    ]
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", lambda: contexts)
+    captured = {}
+    monkeypatch.setattr(
+        "services.subject_service.list_subjects",
+        lambda search, status, semester_id: captured.update(semester_id=semester_id) or [],
+    )
+
+    response = client.get(
+        "/admin/subjects?programme=BCA&academic_year=2027-28&semester=2&section=C"
+    )
+
+    assert response.status_code == 200
+    assert captured["semester_id"] == 22
+    assert b"BCA \xe2\x80\x94 Bachelor of Computer Applications" in response.data
+    assert b">2027-28</option>" in response.data
+    assert b">Semester 2</option>" in response.data
+    assert b">Section C</option>" in response.data
+    assert b'href="/admin/subjects/add?semester_id=22"' in response.data

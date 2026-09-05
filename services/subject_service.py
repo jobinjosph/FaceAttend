@@ -29,22 +29,8 @@ def validate_subject_data(data):
     return errors
 
 
-def get_mca_semester_three():
-    return _fetch_one(
-        """
-        SELECT sem.id, sem.semester_number, sem.section, sem.academic_year,
-               c.id AS course_id, c.code AS course_code, c.name AS course_name
-        FROM semesters sem
-        JOIN courses c ON c.id = sem.course_id
-        WHERE c.code = 'MCA' AND sem.semester_number = 3
-        ORDER BY sem.academic_year DESC, sem.section
-        LIMIT 1
-        """
-    )
-
-
-def list_semester_three_subjects(search="", status="all", semester_id=None):
-    conditions = (["sem.id=%s"] if semester_id else ["c.code = 'MCA'", "sem.semester_number = 3"])
+def list_subjects(search="", status="all", semester_id=None):
+    conditions = ["sem.id=%s"] if semester_id else ["1=0"]
     params = [semester_id] if semester_id else []
     if search:
         conditions.append("(s.subject_code LIKE %s OR s.subject_name LIKE %s)")
@@ -68,8 +54,6 @@ def list_semester_three_subjects(search="", status="all", semester_id=None):
         """,
         tuple(params),
     )
-
-
 def get_subject(subject_id, semester_id=None):
     return _fetch_one(
         """
@@ -78,7 +62,7 @@ def get_subject(subject_id, semester_id=None):
         FROM subjects s
         JOIN semesters sem ON sem.id = s.semester_id
         JOIN courses c ON c.id = sem.course_id
-        WHERE s.id=%s AND ((%s IS NULL AND c.code='MCA' AND sem.semester_number=3) OR sem.id=%s)
+        WHERE s.id=%s AND (%s IS NULL OR sem.id=%s)
         """,
         (subject_id, semester_id, semester_id),
     )

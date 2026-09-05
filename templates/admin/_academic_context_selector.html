@@ -1,0 +1,6 @@
+<form class="list-filter-form academic-context-filters" method="get" data-academic-selector>
+    <label class="form-field" for="programme">Programme<select id="programme" name="programme" onchange="this.form.submit()">{% for item in selector.programmes %}<option value="{{ item.code }}" {{ 'selected' if context and item.code == context.course_code }}>{{ item.code }} — {{ item.name }}</option>{% endfor %}</select></label>
+    <label class="form-field" for="academic_year">Academic year<select id="academic_year" name="academic_year" onchange="this.form.submit()">{% for year in selector.academic_years %}<option value="{{ year }}" {{ 'selected' if context and year == context.academic_year }}>{{ year }}</option>{% endfor %}</select></label>
+    <label class="form-field" for="semester">Semester<select id="semester" name="semester" onchange="this.form.submit()">{% for number in selector.semesters %}<option value="{{ number }}" {{ 'selected' if context and number == context.semester_number }}>Semester {{ number }}</option>{% endfor %}</select></label>
+    <label class="form-field" for="section">Section<select id="section" name="section" onchange="this.form.submit()">{% for section in selector.sections %}<option value="{{ section }}" {{ 'selected' if context and section == context.section }}>Section {{ section }}</option>{% endfor %}</select></label>
+</form>

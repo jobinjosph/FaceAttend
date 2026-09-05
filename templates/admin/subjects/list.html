@@ -7,11 +7,7 @@
         <a class="apple-shop-button" href="{{ url_for('admin_subjects.add_subject',semester_id=context.id if context) }}">Add subject</a>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert alert-{{ category }}" role="alert">{{ message }}</div>{% endfor %}{% endwith %}
-    <form class="list-filter-form timetable-context-filters subject-context-filters" method="get">
-        <label class="form-field" for="programme">Programme<select id="programme" name="programme" onchange="this.form.submit()">{% for item in programmes %}<option value="{{ item.code }}" {{ 'selected' if context and item.code == context.course_code }}>{{ item.code }} — {{ item.name }}</option>{% endfor %}</select></label>
-        <label class="form-field" for="semester">Semester<select id="semester" name="semester" onchange="this.form.submit()">{% for item in semester_options %}<option value="{{ item.semester_number }}" {{ 'selected' if context and item.id == context.id }}>Semester {{ item.semester_number }}{% if item.section != 'A' %} — Section {{ item.section }}{% endif %}</option>{% endfor %}</select></label>
-        <span class="apple-shop-button apple-shop-button-grey subject-filter-spacer" aria-hidden="true">Filter</span>
-    </form>
+    {% include "admin/_academic_context_selector.html" %}
     <form class="list-filter-form" method="get"><input type="hidden" name="semester_id" value="{{ context.id if context }}">
         <input name="search" value="{{ search }}" placeholder="Search code or subject name" aria-label="Search subjects">
         <select name="status" aria-label="Filter by status">
@@ -24,11 +20,11 @@
     <div class="table-card">
     {% if subjects %}<div class="table-scroll"><table class="data-table"><thead><tr><th>Code</th><th>Subject</th><th>Type</th><th>Semester</th><th>Status</th><th>Actions</th></tr></thead><tbody>
     {% for subject in subjects %}<tr>
-        <td><strong>{{ subject.subject_code }}</strong></td><td>{{ subject.subject_name }}</td><td>{{ subject.activity_type|title }}</td><td>{{ subject.course_code }} Semester {{ subject.semester_number }}</td>
+        <td><strong>{{ subject.subject_code }}</strong></td><td>{{ subject.subject_name }}</td><td>{{ subject.activity_type|title }}</td><td>{{ subject.course_code }} · {{ subject.academic_year }} · Semester {{ subject.semester_number }} · Section {{ subject.section }}</td>
         <td><span class="status-badge {{ 'active' if subject.is_active else 'inactive' }}">{{ 'Active' if subject.is_active else 'Inactive' }}</span></td>
         <td class="table-actions"><a href="{{ url_for('admin_subjects.edit_subject',subject_id=subject.id,semester_id=context.id if context) }}">Edit</a><form method="post" action="{{ url_for('admin_subjects.change_subject_status', subject_id=subject.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="semester_id" value="{{ context.id if context }}"><input type="hidden" name="is_active" value="{{ 0 if subject.is_active else 1 }}"><button type="submit">{{ 'Deactivate' if subject.is_active else 'Activate' }}</button></form></td>
     </tr>{% endfor %}</tbody></table></div>
-    {% else %}<div class="empty-state"><strong>No matching Semester 3 subjects</strong><p>Add a subject or change the filters.</p><a href="{{ url_for('admin_subjects.add_subject') }}">Add subject →</a></div>{% endif %}
+    {% else %}<div class="empty-state"><strong>No matching subjects</strong><p>Add a subject or change the filters.</p>{% if context %}<a href="{{ url_for('admin_subjects.add_subject', semester_id=context.id) }}">Add subject →</a>{% endif %}</div>{% endif %}
     </div><a class="text-link" href="{{ url_for('dashboard.admin_dashboard') }}">← Back to Admin Dashboard</a>
 </div></section>
 {% endblock %}

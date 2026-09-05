@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.system
-def test_admin_can_add_edit_and_deactivate_semester_three_subject(client, monkeypatch):
+def test_admin_can_add_edit_and_deactivate_subject_in_selected_group(client, monkeypatch):
     subjects = []
 
     def create(data, semester_id):
@@ -12,9 +12,15 @@ def test_admin_can_add_edit_and_deactivate_semester_three_subject(client, monkey
         })
         return 1
 
-    monkeypatch.setattr("services.subject_service.get_mca_semester_three", lambda: {"id": 3})
+    context = {
+        "id": 3, "course_id": 1, "course_code": "MCA",
+        "course_name": "Master of Computer Applications", "academic_year": "2026-27",
+        "semester_number": 3, "section": "A",
+    }
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", lambda: [context])
+    monkeypatch.setattr("services.academic_context_service.get_active_context", lambda semester_id: context)
     monkeypatch.setattr("services.subject_service.create_subject", create)
-    monkeypatch.setattr("services.subject_service.list_semester_three_subjects", lambda search, status: subjects)
+    monkeypatch.setattr("services.subject_service.list_subjects", lambda search, status, semester_id: subjects)
     monkeypatch.setattr("services.subject_service.get_subject", lambda subject_id: subjects[0] if subjects else None)
     monkeypatch.setattr("services.subject_service.update_subject", lambda subject_id, data: subjects[0].update(data) or True)
     monkeypatch.setattr("services.subject_service.set_subject_active", lambda subject_id, active: subjects[0].update(is_active=active) or True)

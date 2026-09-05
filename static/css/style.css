@@ -1557,6 +1557,15 @@ a {
     gap: 0.75rem;
 }
 
+.academic-context-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.academic-context-filters select {
+    min-height: 58px;
+}
+
 .subject-filter-spacer {
     align-self: end;
     visibility: hidden;
@@ -1568,6 +1577,10 @@ a {
 
 @media (max-width: 700px) {
     .list-filter-form {
+        grid-template-columns: 1fr;
+    }
+
+    .academic-context-filters {
         grid-template-columns: 1fr;
     }
 
