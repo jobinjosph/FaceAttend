@@ -123,7 +123,7 @@ def create_request(user_id, data):
         connection.close()
 
 
-def list_review_requests(user_id, role, status="PENDING"):
+def list_review_requests(user_id, role, status="PENDING", semester_id=None):
     role = str(role).upper()
     clauses = ["cr.status=%s"]
     params = [status]
@@ -132,6 +132,9 @@ def list_review_requests(user_id, role, status="PENDING"):
         params.append(user_id)
     elif role != "ADMIN":
         return []
+    elif semester_id is not None:
+        clauses.append("ats.semester_id=%s")
+        params.append(semester_id)
     return _fetch_all(
         f"""SELECT cr.id, cr.requested_status, cr.reason, cr.status,
                    cr.reviewer_comment, cr.reviewed_at, cr.created_at,
@@ -152,7 +155,7 @@ def list_review_requests(user_id, role, status="PENDING"):
     )
 
 
-def review_request(request_id, reviewer_user_id, role, data):
+def review_request(request_id, reviewer_user_id, role, data, semester_id=None):
     role = str(role).upper()
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
@@ -160,7 +163,7 @@ def review_request(request_id, reviewer_user_id, role, data):
         cursor.execute(
             """SELECT cr.id, cr.attendance_record_id, cr.requested_status, cr.reason,
                       cr.status, f.user_id AS faculty_user_id,
-                      ats.session_date, ats.scheduled_start
+                      ats.session_date, ats.scheduled_start, ats.semester_id
                FROM attendance_correction_requests cr
                JOIN attendance_records ar ON ar.id=cr.attendance_record_id
                JOIN attendance_sessions ats ON ats.id=ar.session_id
@@ -178,6 +181,11 @@ def review_request(request_id, reviewer_user_id, role, data):
         if role not in ("ADMIN", "FACULTY"):
             connection.rollback()
             return "forbidden"
+        if role == "ADMIN" and (
+            semester_id is None or correction["semester_id"] != semester_id
+        ):
+            connection.rollback()
+            return "not_found"
         if correction["status"] != "PENDING":
             connection.rollback()
             return "already_reviewed"

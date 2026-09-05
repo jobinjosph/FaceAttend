@@ -112,6 +112,40 @@ def test_faculty_cannot_review_another_facultys_request(monkeypatch):
 
 
 @pytest.mark.unit
+def test_admin_review_list_is_scoped_to_selected_group(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        correction_service, "_fetch_all",
+        lambda query, params=(): captured.update(query=query, params=params) or [],
+    )
+
+    correction_service.list_review_requests(1, "ADMIN", "PENDING", 22)
+
+    assert "ats.semester_id=%s" in captured["query"]
+    assert captured["params"] == ("PENDING", 22)
+
+
+@pytest.mark.unit
+def test_admin_cannot_review_request_from_another_group(monkeypatch):
+    correction = {
+        "id": 4, "attendance_record_id": 8, "requested_status": "PRESENT",
+        "reason": "Face failed", "status": "PENDING", "faculty_user_id": 22,
+        "session_date": "2026-08-25", "scheduled_start": "10:00:00", "semester_id": 23,
+    }
+    cursor = FakeCursor([correction])
+    connection = FakeConnection(cursor)
+    monkeypatch.setattr(correction_service, "get_db_connection", lambda: connection)
+
+    result = correction_service.review_request(
+        4, 1, "ADMIN", {"decision": "APPROVE", "comment": "Verified"}, 22
+    )
+
+    assert result == "not_found"
+    assert connection.rolled_back and not connection.committed
+    assert len(cursor.calls) == 1
+
+
+@pytest.mark.unit
 def test_approval_updates_record_and_audit_in_one_transaction(monkeypatch):
     correction = {
         "id": 4, "attendance_record_id": 8, "requested_status": "PRESENT",
