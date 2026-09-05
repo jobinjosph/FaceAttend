@@ -26,8 +26,9 @@ def test_admin_session_list_is_scoped_to_selected_semester(monkeypatch):
 
     session_service.list_sessions(selected, 22)
 
-    assert "sem.id = %s" in captured["query"]
-    assert captured["params"] == (selected, 22, 22)
+    assert "ats.semester_id = %s" in captured["query"]
+    assert "MCA" not in captured["query"]
+    assert captured["params"] == (selected, 22)
 
 
 @pytest.mark.unit
@@ -61,6 +62,7 @@ def test_generation_is_duplicate_safe_and_scoped_to_selected_semester(monkeypatc
 
     assert session_service.generate_sessions(selected, 22) == 2
     assert "INSERT IGNORE INTO attendance_sessions" in captured["query"]
-    assert "sem.id = %s" in captured["query"]
-    assert captured["params"] == (selected, 1, 22, 22)
+    assert "tp.semester_id = %s" in captured["query"]
+    assert "MCA" not in captured["query"]
+    assert captured["params"] == (selected, 1, 22)
     assert captured["committed"] is True

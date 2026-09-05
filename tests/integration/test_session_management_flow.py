@@ -2,13 +2,22 @@ from datetime import date
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def academic_context(monkeypatch):
+    context = {"id": 3, "course_code": "MCA", "course_name": "Master of Computer Applications",
+               "semester_number": 3, "section": "A", "academic_year": "2026-27"}
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", lambda: [context])
+    monkeypatch.setattr("services.academic_context_service.get_active_context",
+                        lambda semester_id: context if semester_id == 3 else None)
+
+
 def login(client,role,user_id=1):
     with client.session_transaction() as session: session.update(user_id=user_id,full_name="User",role=role)
 
 
 @pytest.mark.integration
 def test_duplicate_generation_reports_no_new_sessions(client,monkeypatch):
-    login(client,"ADMIN"); monkeypatch.setattr("services.session_service.generate_sessions",lambda day:0); monkeypatch.setattr("services.session_service.list_sessions",lambda day:[])
+    login(client,"ADMIN"); monkeypatch.setattr("services.session_service.generate_sessions",lambda day, semester_id:0); monkeypatch.setattr("services.session_service.list_sessions",lambda day, semester_id:[])
     response=client.post("/admin/sessions/generate",data={"session_date":"2026-08-24"},follow_redirects=True)
     assert b"No new sessions were generated" in response.data
 

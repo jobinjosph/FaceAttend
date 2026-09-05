@@ -13,7 +13,7 @@ def parse_session_date(value):
         return None
 
 
-def generate_sessions(session_date, semester_id=None):
+def generate_sessions(session_date, semester_id):
     day_of_week = session_date.isoweekday()
     if day_of_week > 6:
         return 0
@@ -28,13 +28,11 @@ def generate_sessions(session_date, semester_id=None):
             SELECT tp.semester_id, tp.subject_id, tp.faculty_id, tp.id,
                    %s, tp.period_number, tp.start_time, tp.end_time, 'SCHEDULED'
             FROM timetable_periods tp
-            JOIN semesters sem ON sem.id = tp.semester_id
-            JOIN courses c ON c.id = sem.course_id
             WHERE tp.day_of_week = %s AND tp.subject_id IS NOT NULL
               AND tp.faculty_id IS NOT NULL
-              AND ((%s IS NULL AND c.code = 'MCA' AND sem.semester_number = 3) OR sem.id = %s)
+              AND tp.semester_id = %s
             """,
-            (session_date, day_of_week, semester_id, semester_id),
+            (session_date, day_of_week, semester_id),
         )
         count = cursor.rowcount
         connection.commit()
@@ -47,7 +45,7 @@ def generate_sessions(session_date, semester_id=None):
         connection.close()
 
 
-def list_sessions(session_date, semester_id=None):
+def list_sessions(session_date, semester_id):
     return _fetch_all(
         """
         SELECT ats.id, ats.session_date, ats.period_number, ats.status,
@@ -58,13 +56,11 @@ def list_sessions(session_date, semester_id=None):
         FROM attendance_sessions ats
         JOIN subjects s ON s.id = ats.subject_id
         JOIN faculty f ON f.id = ats.faculty_id
-        JOIN semesters sem ON sem.id = ats.semester_id
-        JOIN courses c ON c.id = sem.course_id
         WHERE ats.session_date = %s
-          AND ((%s IS NULL AND c.code = 'MCA' AND sem.semester_number = 3) OR sem.id = %s)
+          AND ats.semester_id = %s
         ORDER BY ats.period_number, ats.scheduled_start
         """,
-        (session_date, semester_id, semester_id),
+        (session_date, semester_id),
     )
 
 
