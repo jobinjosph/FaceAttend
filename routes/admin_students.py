@@ -1,5 +1,8 @@
+import csv
+import io
+
 import mysql.connector
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, session, url_for
 
 from decorators.auth import role_required
 from services import academic_context_service, student_service
@@ -122,6 +125,60 @@ def placement_history(student_id):
         flash("Placement history could not be loaded. Please try again.", "error")
         history = []
     return render_template("admin/students/placement_history.html", student=student, history=history)
+
+
+@admin_students_bp.get("/import/template.csv")
+@role_required("ADMIN")
+def bulk_import_template():
+    output = io.StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow(["register_number", "full_name", "email", "initial_password"])
+    writer.writerow(["25MCA001", "Student Name", "student@example.com", "ChangeMe123"])
+    return Response(
+        output.getvalue(), mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=student-enrolment-template.csv"},
+    )
+
+
+@admin_students_bp.route("/import", methods=["GET", "POST"])
+@role_required("ADMIN")
+def bulk_import():
+    semester_id = request.values.get("semester_id", type=int)
+    context = academic_context_service.get_active_context(semester_id) if semester_id else None
+    if context is None:
+        abort(404)
+    errors = []
+    if request.method == "POST":
+        upload = request.files.get("csv_file")
+        if upload is None or not upload.filename:
+            errors.append("Choose a CSV file to import.")
+        elif not upload.filename.lower().endswith(".csv"):
+            errors.append("Upload a file with the .csv extension.")
+        else:
+            try:
+                text = upload.stream.read().decode("utf-8-sig")
+                reader = csv.DictReader(io.StringIO(text))
+                required = {"register_number", "full_name", "email", "initial_password"}
+                if not reader.fieldnames or set(reader.fieldnames) != required:
+                    errors.append("Use the CSV template without changing its four column headings.")
+                else:
+                    rows = list(reader)
+                    prepared, row_errors = student_service.prepare_bulk_students(
+                        rows, context["course_id"], context["id"]
+                    )
+                    errors.extend(row_errors)
+                    if not errors:
+                        imported = student_service.bulk_create_students(prepared)
+                        flash(f"{imported} student{'s' if imported != 1 else ''} enrolled successfully.", "success")
+                        return redirect(url_for("admin_students.student_list", semester_id=context["id"]))
+            except UnicodeDecodeError:
+                errors.append("The CSV file must use UTF-8 text encoding.")
+            except ValueError as exc:
+                errors.append(str(exc))
+            except mysql.connector.Error as exc:
+                current_app.logger.error("Could not import students: %s", exc)
+                errors.append("The students could not be imported. Please try again.")
+    return render_template("admin/students/import.html", context=context, errors=errors), 400 if errors else 200
 
 
 @admin_students_bp.route("/add", methods=["GET", "POST"])

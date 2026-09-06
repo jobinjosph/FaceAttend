@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Import students | FaceAttend{% endblock %}
+{% block content %}
+<section class="dashboard-section"><div class="container narrow-container">
+    <span class="section-kicker">Admin · Students</span>
+    <h1>Import students</h1>
+    <p>Enrol students into {{ context.course_code }} · {{ context.academic_year }} · Semester {{ context.semester_number }} · Section {{ context.section }}.</p>
+    {% for error in errors %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endfor %}
+    <form method="post" enctype="multipart/form-data" class="student-form-card">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="semester_id" value="{{ context.id }}">
+        <div class="form-field"><label for="csv_file">Student CSV file</label><input id="csv_file" name="csv_file" type="file" accept=".csv,text/csv" required><small>Maximum 1,000 students. Every row is checked before anything is saved.</small></div>
+        <div class="alert alert-info"><strong>Required columns:</strong> register_number, full_name, email, initial_password. Passwords must contain at least 8 characters.</div>
+        <p><a class="text-link" href="{{ url_for('admin_students.bulk_import_template') }}">Download CSV template</a></p>
+        <div class="form-actions"><a class="button cancel-button" href="{{ url_for('admin_students.student_list', semester_id=context.id) }}">Cancel</a><button class="button primary" type="submit">Validate and import</button></div>
+    </form>
+</div></section>
+{% endblock %}

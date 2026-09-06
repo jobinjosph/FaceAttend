@@ -13,6 +13,7 @@
             </div>
             <div class="page-heading-actions">
                 {% if context %}<a class="button report-secondary-button" href="{{ url_for('admin_students.manage_placement', semester_id=context.id) }}">Promote or transfer</a>{% endif %}
+                {% if context %}<a class="button report-secondary-button" href="{{ url_for('admin_students.bulk_import', semester_id=context.id) }}">Import CSV</a>{% endif %}
                 <a class="apple-shop-button" href="{{ url_for('admin_students.add_student', semester_id=context.id if context) }}">Add student</a>
             </div>
         </div>

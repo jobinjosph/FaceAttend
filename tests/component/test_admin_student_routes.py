@@ -1,6 +1,7 @@
 import pytest
 import mysql.connector
 from datetime import datetime
+from io import BytesIO
 
 
 def login_as(client, role):
@@ -173,3 +174,69 @@ def test_unknown_student_placement_history_returns_404(client, monkeypatch):
     monkeypatch.setattr("services.student_service.get_student", lambda student_id: None)
 
     assert client.get("/admin/students/999/placement-history").status_code == 404
+
+
+@pytest.mark.component
+def test_admin_can_download_bulk_enrolment_template(client):
+    login_as(client, "ADMIN")
+
+    response = client.get("/admin/students/import/template.csv")
+
+    assert response.status_code == 200
+    assert response.mimetype == "text/csv"
+    assert b"register_number,full_name,email,initial_password" in response.data
+
+
+@pytest.mark.component
+def test_admin_can_import_valid_student_csv(client, monkeypatch):
+    login_as(client, "ADMIN")
+    context = academic_contexts()[0]
+    captured = {}
+    monkeypatch.setattr("services.academic_context_service.get_active_context", lambda semester_id: context)
+    monkeypatch.setattr(
+        "services.student_service.bulk_create_students",
+        lambda rows: captured.update(rows=rows) or len(rows),
+    )
+    csv_data = (
+        b"register_number,full_name,email,initial_password\n"
+        b"25mca001,Test Student,STUDENT@example.com,Student123\n"
+    )
+
+    response = client.post(
+        "/admin/students/import",
+        data={"semester_id": "2", "csv_file": (BytesIO(csv_data), "students.csv")},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/admin/students?semester_id=2")
+    assert captured["rows"][0]["register_number"] == "25MCA001"
+    assert captured["rows"][0]["email"] == "student@example.com"
+
+
+@pytest.mark.component
+def test_bulk_import_reports_csv_row_errors_without_writing(client, monkeypatch):
+    login_as(client, "ADMIN")
+    monkeypatch.setattr(
+        "services.academic_context_service.get_active_context",
+        lambda semester_id: academic_contexts()[0],
+    )
+    monkeypatch.setattr(
+        "services.student_service.bulk_create_students",
+        lambda rows: pytest.fail("invalid CSV must not be written"),
+    )
+    csv_data = (
+        b"register_number,full_name,email,initial_password\n"
+        b"25MCA001,Student One,same@example.com,Student123\n"
+        b"25MCA001,Student Two,same@example.com,short\n"
+    )
+
+    response = client.post(
+        "/admin/students/import",
+        data={"semester_id": "2", "csv_file": (BytesIO(csv_data), "students.csv")},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 400
+    assert b"Row 3" in response.data
+    assert b"duplicated in this file" in response.data

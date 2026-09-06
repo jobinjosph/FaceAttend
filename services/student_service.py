@@ -159,6 +159,91 @@ def create_student(data):
         connection.close()
 
 
+def prepare_bulk_students(rows, course_id, semester_id, maximum_rows=1000):
+    if not rows:
+        return [], ["The CSV file does not contain any students."]
+    if len(rows) > maximum_rows:
+        return [], [f"Import at most {maximum_rows} students at a time."]
+
+    prepared = []
+    errors = []
+    seen_register_numbers = set()
+    seen_emails = set()
+    for row_number, row in enumerate(rows, start=2):
+        data = normalize_student_data({
+            "register_number": row.get("register_number", ""),
+            "full_name": row.get("full_name", ""),
+            "email": row.get("email", ""),
+            "password": row.get("initial_password", ""),
+            "course_id": str(course_id),
+            "semester_id": str(semester_id),
+        })
+        row_errors = validate_student_data(data, require_password=True)
+        if data["register_number"] in seen_register_numbers:
+            row_errors["register_number"] = "Register number is duplicated in this file."
+        if data["email"] in seen_emails:
+            row_errors["email"] = "Email is duplicated in this file."
+        if row_errors:
+            errors.append(f"Row {row_number}: " + " ".join(row_errors.values()))
+        else:
+            prepared.append(data)
+        seen_register_numbers.add(data["register_number"])
+        seen_emails.add(data["email"])
+    return prepared, errors
+
+
+def bulk_create_students(rows):
+    if not rows:
+        raise ValueError("The CSV file does not contain any valid students.")
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    try:
+        register_numbers = [row["register_number"] for row in rows]
+        emails = [row["email"] for row in rows]
+        register_placeholders = ", ".join(["%s"] * len(register_numbers))
+        email_placeholders = ", ".join(["%s"] * len(emails))
+        cursor.execute(
+            f"SELECT register_number FROM students WHERE register_number IN ({register_placeholders})",
+            tuple(register_numbers),
+        )
+        existing_registers = [item["register_number"] for item in cursor.fetchall()]
+        cursor.execute(
+            f"SELECT email FROM users WHERE email IN ({email_placeholders})",
+            tuple(emails),
+        )
+        existing_emails = [item["email"] for item in cursor.fetchall()]
+        if existing_registers or existing_emails:
+            details = []
+            if existing_registers:
+                details.append("register number(s): " + ", ".join(sorted(existing_registers)))
+            if existing_emails:
+                details.append("email(s): " + ", ".join(sorted(existing_emails)))
+            raise ValueError("Already registered " + "; ".join(details) + ". No students were imported.")
+
+        for row in rows:
+            cursor.execute(
+                """INSERT INTO users (full_name, email, password_hash, role, is_active)
+                   VALUES (%s, %s, %s, 'STUDENT', TRUE)""",
+                (row["full_name"], row["email"], hash_password(row["password"])),
+            )
+            user_id = cursor.lastrowid
+            cursor.execute(
+                """INSERT INTO students
+                       (user_id, register_number, full_name, email, course_id, semester_id)
+                   VALUES (%s, %s, %s, %s, %s, %s)""",
+                (user_id, row["register_number"], row["full_name"], row["email"],
+                 row["course_id"], row["semester_id"]),
+            )
+        connection.commit()
+        return len(rows)
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+
+
 def update_student(student_id, data, moved_by_user_id=None):
     student = get_student(student_id)
     if student is None:

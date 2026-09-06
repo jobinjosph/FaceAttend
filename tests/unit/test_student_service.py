@@ -217,3 +217,33 @@ def test_placement_history_is_loaded_newest_first(monkeypatch):
     assert "to_semester_id" in captured["query"]
     assert "ORDER BY h.moved_at DESC" in captured["query"]
     assert captured["params"] == (7,)
+
+
+@pytest.mark.unit
+def test_bulk_students_are_normalized_and_duplicate_rows_are_rejected():
+    rows = [
+        {"register_number": " 25mca001 ", "full_name": " Student   One ",
+         "email": "ONE@EXAMPLE.COM", "initial_password": "Student123"},
+        {"register_number": "25MCA001", "full_name": "Student Two",
+         "email": "one@example.com", "initial_password": "short"},
+    ]
+
+    prepared, errors = student_service.prepare_bulk_students(rows, 4, 9)
+
+    assert prepared[0]["register_number"] == "25MCA001"
+    assert prepared[0]["full_name"] == "Student One"
+    assert prepared[0]["email"] == "one@example.com"
+    assert prepared[0]["course_id"] == 4
+    assert prepared[0]["semester_id"] == 9
+    assert len(errors) == 1
+    assert "Row 3" in errors[0]
+    assert "duplicated in this file" in errors[0]
+    assert "at least 8 characters" in errors[0]
+
+
+@pytest.mark.unit
+def test_bulk_student_import_rejects_empty_and_oversized_files():
+    assert student_service.prepare_bulk_students([], 1, 2)[1]
+    rows = [{"register_number": str(index)} for index in range(3)]
+    _, errors = student_service.prepare_bulk_students(rows, 1, 2, maximum_rows=2)
+    assert errors == ["Import at most 2 students at a time."]
