@@ -56,15 +56,15 @@ def normalize_filters(values):
 
 def normalize_student_filters(values):
     filters, errors = normalize_filters(values)
-    filters["semester"] = None
-    semester = str(values.get("semester", "")).strip()
-    if semester:
+    filters["semester_id"] = None
+    semester_id = str(values.get("semester_id", "")).strip()
+    if semester_id:
         try:
-            filters["semester"] = int(semester)
-            if filters["semester"] not in range(1, 5):
+            filters["semester_id"] = int(semester_id)
+            if filters["semester_id"] < 1:
                 raise ValueError
         except ValueError:
-            errors["semester"] = "Select a valid semester."
+            errors["semester_id"] = "Select a valid academic placement."
     return filters, errors
 
 
@@ -92,7 +92,7 @@ def normalize_cohort_filters(values):
 
 
 def get_student_report(user_id, filters=None):
-    filters = filters or {"subject_id": None, "month": "", "date": "", "semester": None}
+    filters = filters or {"subject_id": None, "month": "", "date": "", "semester_id": None}
     student = _fetch_one(
         """SELECT st.id, st.register_number, st.full_name, st.course_id, st.semester_id,
                   c.code AS course_code, c.name AS course_name,
@@ -106,19 +106,38 @@ def get_student_report(user_id, filters=None):
     if student is None:
         return None
 
-    selected_semester = filters.get("semester") or student["semester_number"]
-    target_semester = {"id": student["semester_id"]}
-    if selected_semester != student["semester_number"]:
-        target_semester = _fetch_one(
-            """SELECT id FROM semesters
-               WHERE course_id=%s AND semester_number=%s
-               ORDER BY academic_year DESC, section LIMIT 1""",
-            (student["course_id"], selected_semester),
-        )
-    student = dict(student)
-    student["semester_number"] = selected_semester
+    placements = _fetch_all(
+        """SELECT DISTINCT sem.id, sem.academic_year, sem.semester_number, sem.section,
+                  c.id AS course_id, c.code AS course_code, c.name AS course_name
+           FROM semesters sem
+           JOIN courses c ON c.id=sem.course_id
+           WHERE sem.id=%s OR sem.id IN (
+               SELECT from_semester_id FROM student_placement_history WHERE student_id=%s
+               UNION
+               SELECT to_semester_id FROM student_placement_history WHERE student_id=%s
+           )
+           ORDER BY sem.academic_year, sem.semester_number, sem.section""",
+        (student["semester_id"], student["id"], student["id"]),
+    )
+    requested_semester_id = filters.get("semester_id")
+    target_semester = next(
+        (item for item in placements if item["id"] == requested_semester_id), None
+    ) if requested_semester_id else next(
+        (item for item in placements if item["id"] == student["semester_id"]), None
+    )
+    invalid_placement = requested_semester_id is not None and target_semester is None
     if target_semester is None:
-        return build_report(student, [], [])
+        target_semester = next(item for item in placements if item["id"] == student["semester_id"])
+    student = dict(student)
+    student.update({
+        "course_id": target_semester["course_id"],
+        "course_code": target_semester["course_code"],
+        "course_name": target_semester["course_name"],
+        "semester_id": target_semester["id"],
+        "semester_number": target_semester["semester_number"],
+        "section": target_semester["section"],
+        "academic_year": target_semester["academic_year"],
+    })
 
     clauses = ["ar.student_id=%s", "ats.semester_id=%s", "ats.status='CONFIRMED'"]
     params = [student["id"], target_semester["id"]]
@@ -154,7 +173,9 @@ def get_student_report(user_id, filters=None):
            ORDER BY subject_code""",
         (target_semester["id"],),
     )
-    return build_report(student, history, subjects)
+    report = build_report(student, history, subjects, placements)
+    report["invalid_placement"] = invalid_placement
+    return report
 
 
 def get_cohort_report(user_id, role, filters=None):
@@ -289,7 +310,7 @@ def build_cohort_report(history, available_students=None, available_subjects=Non
     }
 
 
-def build_report(student, history, available_subjects=None):
+def build_report(student, history, available_subjects=None, available_placements=None):
     totals = _empty_totals()
     grouped = OrderedDict()
     normalized_history = []
@@ -329,6 +350,7 @@ def build_report(student, history, available_subjects=None):
         "months": months,
         "dates": dates,
         "available_subjects": available_subjects or [],
+        "available_placements": available_placements or [],
         "threshold": LOW_ATTENDANCE_THRESHOLD,
         "low_attendance": bool(totals["total"] and totals["percentage"] < LOW_ATTENDANCE_THRESHOLD),
     }

@@ -20,6 +20,8 @@ def attendance_report():
     report = report_service.get_student_report(session["user_id"], filters)
     if report is None:
         return render_template("student/report_unavailable.html"), 404
+    if report.get("invalid_placement"):
+        errors["semester_id"] = "You do not have attendance access for that academic placement."
     return render_template(
         "student/attendance_report.html", report=report, filters=filters, errors=errors, view=view,
         month_options=report_service.get_month_options(filters),
@@ -90,6 +92,8 @@ def _load_export_report():
     report = report_service.get_student_report(session["user_id"], filters)
     if report is None:
         abort(404)
+    if report.get("invalid_placement"):
+        abort(403)
     return report, filters
 
 

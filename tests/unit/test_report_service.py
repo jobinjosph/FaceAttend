@@ -39,15 +39,40 @@ def test_report_calculates_overall_and_subject_percentages():
 @pytest.mark.unit
 def test_report_filters_are_normalized_and_invalid_values_rejected():
     filters, errors = report_service.normalize_student_filters(
-        {"subject_id": "7", "month": "2026-08", "date": "2026-08-22", "semester": "2"}
+        {"subject_id": "7", "month": "2026-08", "date": "2026-08-22", "semester_id": "22"}
     )
     assert errors == {}
-    assert filters == {"subject_id": 7, "month": "2026-08", "date": "2026-08-22", "semester": 2}
+    assert filters == {"subject_id": 7, "month": "2026-08", "date": "2026-08-22", "semester_id": 22}
 
     _, errors = report_service.normalize_student_filters(
-        {"subject_id": "bad", "month": "2026-13", "date": "not-a-date", "semester": "5"}
+        {"subject_id": "bad", "month": "2026-13", "date": "not-a-date", "semester_id": "wrong"}
     )
-    assert set(errors) == {"subject_id", "month", "date", "semester"}
+    assert set(errors) == {"subject_id", "month", "date", "semester_id"}
+
+
+@pytest.mark.unit
+def test_student_report_only_accepts_recorded_placements(monkeypatch):
+    student = {"id": 3, "register_number": "25MCA03", "full_name": "Student",
+               "course_id": 1, "semester_id": 8, "course_code": "MCA",
+               "course_name": "MCA", "semester_number": 3, "section": "A",
+               "academic_year": "2026-27"}
+    placements = [{"id": 8, "course_id": 1, "course_code": "MCA", "course_name": "MCA",
+                   "semester_number": 3, "section": "A", "academic_year": "2026-27"}]
+    monkeypatch.setattr(report_service, "_fetch_one", lambda *args: student)
+    calls = []
+    monkeypatch.setattr(
+        report_service, "_fetch_all",
+        lambda query, params=(): calls.append((query, params)) or (placements if len(calls) == 1 else []),
+    )
+
+    report = report_service.get_student_report(
+        9, {"subject_id": None, "month": "", "date": "", "semester_id": 99}
+    )
+
+    assert report["invalid_placement"] is True
+    assert report["student"]["semester_id"] == 8
+    assert "student_placement_history" in calls[0][0]
+    assert calls[0][1] == (8, 3, 3)
 
 
 @pytest.mark.unit
