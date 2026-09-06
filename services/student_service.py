@@ -84,6 +84,32 @@ def get_student(student_id):
     return _fetch_one(query, (student_id,))
 
 
+def get_placement_history(student_id):
+    return _fetch_all(
+        """SELECT h.id, h.moved_at,
+                  from_course.code AS from_course_code,
+                  from_course.name AS from_course_name,
+                  from_sem.academic_year AS from_academic_year,
+                  from_sem.semester_number AS from_semester_number,
+                  from_sem.section AS from_section,
+                  to_course.code AS to_course_code,
+                  to_course.name AS to_course_name,
+                  to_sem.academic_year AS to_academic_year,
+                  to_sem.semester_number AS to_semester_number,
+                  to_sem.section AS to_section,
+                  mover.full_name AS moved_by_name
+           FROM student_placement_history h
+           JOIN semesters from_sem ON from_sem.id=h.from_semester_id
+           JOIN courses from_course ON from_course.id=from_sem.course_id
+           JOIN semesters to_sem ON to_sem.id=h.to_semester_id
+           JOIN courses to_course ON to_course.id=to_sem.course_id
+           LEFT JOIN users mover ON mover.id=h.moved_by_user_id
+           WHERE h.student_id=%s
+           ORDER BY h.moved_at DESC, h.id DESC""",
+        (student_id,),
+    )
+
+
 def active_semester_belongs_to_course(semester_id, course_id):
     result = _fetch_one(
         """SELECT sem.id FROM semesters sem
@@ -133,7 +159,7 @@ def create_student(data):
         connection.close()
 
 
-def update_student(student_id, data):
+def update_student(student_id, data, moved_by_user_id=None):
     student = get_student(student_id)
     if student is None:
         return
@@ -172,6 +198,15 @@ def update_student(student_id, data):
                 ),
             )
             user_id = cursor.lastrowid
+
+        previous_semester_id = student.get("semester_id")
+        if previous_semester_id is not None and previous_semester_id != data["semester_id"]:
+            cursor.execute(
+                """INSERT INTO student_placement_history
+                       (student_id, from_semester_id, to_semester_id, moved_by_user_id)
+                   VALUES (%s, %s, %s, %s)""",
+                (student_id, previous_semester_id, data["semester_id"], moved_by_user_id),
+            )
 
         cursor.execute(
             """

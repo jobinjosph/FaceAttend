@@ -102,3 +102,22 @@ def test_student_activation_status_is_synchronized_to_login(monkeypatch):
     assert connection.committed is True
     assert cursor.calls[0][1] == (False, 8)
     assert cursor.calls[1][1] == (False, 40)
+
+
+@pytest.mark.unit
+def test_editing_student_placement_records_history_in_same_transaction(monkeypatch):
+    cursor = FakeCursor((1,))
+    connection = FakeConnection(cursor)
+    monkeypatch.setattr(
+        student_service,
+        "get_student",
+        lambda student_id: {"id": student_id, "user_id": 40, "is_active": True,
+                            "semester_id": 1},
+    )
+    monkeypatch.setattr(student_service, "get_db_connection", lambda: connection)
+
+    student_service.update_student(8, student_data(password=""), moved_by_user_id=5)
+
+    history_calls = [call for call in cursor.calls if "student_placement_history" in call[0]]
+    assert history_calls[0][1] == (8, 1, 2, 5)
+    assert connection.committed is True

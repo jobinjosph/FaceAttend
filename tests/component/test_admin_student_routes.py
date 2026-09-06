@@ -1,5 +1,6 @@
 import pytest
 import mysql.connector
+from datetime import datetime
 
 
 def login_as(client, role):
@@ -135,3 +136,40 @@ def test_admin_can_open_student_placement_page(client, monkeypatch):
     assert b"MCA" in response.data
     assert b"Semester 4" in response.data
     assert b' name="student_id" value="8"' in response.data
+
+
+@pytest.mark.component
+def test_admin_can_view_student_placement_history(client, monkeypatch):
+    login_as(client, "ADMIN")
+    monkeypatch.setattr(
+        "services.student_service.get_student",
+        lambda student_id: {"id": student_id, "register_number": "23MCA08",
+                            "full_name": "Test Student", "semester_id": 3},
+    )
+    monkeypatch.setattr(
+        "services.student_service.get_placement_history",
+        lambda student_id: [{
+            "moved_at": datetime(2026, 9, 6, 10, 30),
+            "from_course_code": "MCA", "from_course_name": "Master of Computer Applications",
+            "from_academic_year": "2026-27", "from_semester_number": 3, "from_section": "A",
+            "to_course_code": "MCA", "to_course_name": "Master of Computer Applications",
+            "to_academic_year": "2026-27", "to_semester_number": 4, "to_section": "B",
+            "moved_by_name": "Admin",
+        }],
+    )
+
+    response = client.get("/admin/students/8/placement-history")
+
+    assert response.status_code == 200
+    assert b"Placement history" in response.data
+    assert b"Semester 3" in response.data
+    assert b"Section B" in response.data
+    assert b"Admin" in response.data
+
+
+@pytest.mark.component
+def test_unknown_student_placement_history_returns_404(client, monkeypatch):
+    login_as(client, "ADMIN")
+    monkeypatch.setattr("services.student_service.get_student", lambda student_id: None)
+
+    assert client.get("/admin/students/999/placement-history").status_code == 404

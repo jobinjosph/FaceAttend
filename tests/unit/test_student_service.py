@@ -199,3 +199,21 @@ def test_bulk_placement_records_history_and_updates_current_group(monkeypatch):
     update_query, update_params = connection.test_cursor.executed[-1]
     assert "UPDATE students" in update_query
     assert update_params == (4, 9, 7, 8)
+
+
+@pytest.mark.unit
+def test_placement_history_is_loaded_newest_first(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        student_service,
+        "_fetch_all",
+        lambda query, params=(): captured.update(query=query, params=params) or [],
+    )
+
+    student_service.get_placement_history(7)
+
+    assert "student_placement_history" in captured["query"]
+    assert "from_semester_id" in captured["query"]
+    assert "to_semester_id" in captured["query"]
+    assert "ORDER BY h.moved_at DESC" in captured["query"]
+    assert captured["params"] == (7,)

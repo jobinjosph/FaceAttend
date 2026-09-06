@@ -109,6 +109,21 @@ def manage_placement():
     return redirect(url_for("admin_students.student_list", semester_id=destination_id))
 
 
+@admin_students_bp.get("/<int:student_id>/placement-history")
+@role_required("ADMIN")
+def placement_history(student_id):
+    student = student_service.get_student(student_id)
+    if student is None:
+        abort(404)
+    try:
+        history = student_service.get_placement_history(student_id)
+    except mysql.connector.Error as exc:
+        current_app.logger.error("Could not load student placement history: %s", exc)
+        flash("Placement history could not be loaded. Please try again.", "error")
+        history = []
+    return render_template("admin/students/placement_history.html", student=student, history=history)
+
+
 @admin_students_bp.route("/add", methods=["GET", "POST"])
 @role_required("ADMIN")
 def add_student():
@@ -174,7 +189,7 @@ def edit_student(student_id):
         return render_student_form(data, errors, 400, data.get("semester_id"))
 
     try:
-        student_service.update_student(student_id, data)
+        student_service.update_student(student_id, data, session["user_id"])
     except mysql.connector.IntegrityError as exc:
         if "email" in str(exc).lower():
             errors["email"] = "This email address is already used by another account."

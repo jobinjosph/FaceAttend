@@ -33,7 +33,7 @@ def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
         )
         return 1
 
-    def update_student(student_id, data):
+    def update_student(student_id, data, moved_by_user_id=None):
         students[0].update(data)
 
     def set_active(student_id, active):
