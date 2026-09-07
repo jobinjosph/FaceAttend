@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.system
-def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
+def test_admin_can_add_view_edit_and_graduate_student(client, monkeypatch):
     students = []
     contexts = [
         {
@@ -24,6 +24,7 @@ def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
                 **data,
                 "face_registered": False,
                 "is_active": True,
+                "lifecycle_status": "ACTIVE",
                 "course_code": "MCA",
                 "course_name": "Master of Computer Applications",
                 "semester_number": 3,
@@ -84,10 +85,10 @@ def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
     assert b"Updated Student" in edited.data
     assert b"Linked" in edited.data
 
-    deactivated = client.post(
-        "/admin/students/1/status",
-        data={"is_active": "0"},
+    graduated = client.post(
+        "/admin/students/1/lifecycle",
+        data={"lifecycle_status": "GRADUATED", "return_status": "ACTIVE"},
         follow_redirects=True,
     )
-    assert deactivated.status_code == 200
-    assert b"Archived" in deactivated.data
+    assert graduated.status_code == 200
+    assert b"Graduated" in graduated.data

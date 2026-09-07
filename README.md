@@ -59,6 +59,25 @@ The automated database-health tests use a mock and do not modify the local
 `faceattend` database. GitHub Actions runs the same test suite after every push
 to `main` and for every pull request targeting `main`.
 
+## Final workflow verification
+
+Before presenting a release, run the full suite and verify these browser journeys:
+
+1. Create or select an academic group: programme, academic year, semester and section.
+2. Add subjects, assign faculty and build its timetable.
+3. Generate an attendance session and complete the faculty review workflow.
+4. Confirm the student attendance views and staff reports use the selected group.
+5. Submit and review an attendance correction request.
+6. Move or promote a student and confirm the placement history is retained.
+7. Mark a student as graduated, withdrawn or archived and confirm the lifecycle history is retained.
+8. Confirm non-active students cannot sign in or enter new attendance workflows.
+
+The automated system journeys for these workflows can be run separately with:
+
+```bash
+pytest tests/system -q
+```
+
 ---
 
 # Create the first administrator
