@@ -35,6 +35,9 @@ def render_student_form(student=None, errors=None, status=200, semester_id=None)
 @admin_students_bp.get("")
 @role_required("ADMIN")
 def student_list():
+    lifecycle_status = request.args.get("status", "ACTIVE").strip().upper()
+    if lifecycle_status not in student_service.LIFECYCLE_STATUSES:
+        lifecycle_status = "ACTIVE"
     semester_id = request.args.get("semester_id", type=int)
     contexts = academic_context_service.list_active_contexts()
     context = academic_context_service.resolve_context(
@@ -47,7 +50,7 @@ def student_list():
     if context is None and (semester_id is not None or request.args.get("programme")):
         abort(404)
     try:
-        students = student_service.list_students(context["id"]) if context else []
+        students = student_service.list_students(context["id"], lifecycle_status) if context else []
     except mysql.connector.Error as exc:
         current_app.logger.error("Could not list students: %s", exc)
         flash("Students could not be loaded. Please try again.", "error")
@@ -55,6 +58,7 @@ def student_list():
     return render_template(
         "admin/students/list.html", students=students, context=context,
         selector=academic_context_service.build_selector_options(contexts, context),
+        selected_status=lifecycle_status,
     )
 
 
@@ -120,11 +124,16 @@ def placement_history(student_id):
         abort(404)
     try:
         history = student_service.get_placement_history(student_id)
+        lifecycle_history = student_service.get_lifecycle_history(student_id)
     except mysql.connector.Error as exc:
         current_app.logger.error("Could not load student placement history: %s", exc)
         flash("Placement history could not be loaded. Please try again.", "error")
         history = []
-    return render_template("admin/students/placement_history.html", student=student, history=history)
+        lifecycle_history = []
+    return render_template(
+        "admin/students/placement_history.html", student=student, history=history,
+        lifecycle_history=lifecycle_history,
+    )
 
 
 @admin_students_bp.get("/import/template.csv")
@@ -275,7 +284,9 @@ def change_student_status(student_id):
 
     is_active = request.form.get("is_active") == "1"
     try:
-        student_service.set_student_active(student_id, is_active)
+        student_service.set_student_lifecycle_status(
+            student_id, "ACTIVE" if is_active else "ARCHIVED", session["user_id"]
+        )
     except mysql.connector.Error as exc:
         current_app.logger.error("Could not change student status: %s", exc)
         flash("Student status could not be changed.", "error")
@@ -284,3 +295,27 @@ def change_student_status(student_id):
     message = "Student activated." if is_active else "Student deactivated."
     flash(message, "success")
     return redirect(url_for("admin_students.student_list", semester_id=student.get("semester_id")))
+
+
+@admin_students_bp.post("/<int:student_id>/lifecycle")
+@role_required("ADMIN")
+def change_student_lifecycle(student_id):
+    student = student_service.get_student(student_id)
+    if student is None:
+        abort(404)
+    lifecycle_status = request.form.get("lifecycle_status", "").strip().upper()
+    try:
+        student_service.set_student_lifecycle_status(
+            student_id, lifecycle_status, session["user_id"]
+        )
+    except ValueError as exc:
+        flash(str(exc), "error")
+    except mysql.connector.Error as exc:
+        current_app.logger.error("Could not change student lifecycle: %s", exc)
+        flash("Student status could not be changed.", "error")
+    else:
+        flash(f"Student status changed to {lifecycle_status.replace('_', ' ').title()}.", "success")
+    return redirect(url_for(
+        "admin_students.student_list", semester_id=student.get("semester_id"),
+        status=request.form.get("return_status", "ACTIVE"),
+    ))

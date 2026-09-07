@@ -120,7 +120,7 @@ def test_student_list_is_limited_to_the_selected_semester_group(monkeypatch):
     student_service.list_students(17)
 
     assert "WHERE s.semester_id = %s" in captured["query"]
-    assert captured["params"] == (17,)
+    assert captured["params"] == (17, "ACTIVE")
 
 
 @pytest.mark.unit
@@ -247,3 +247,18 @@ def test_bulk_student_import_rejects_empty_and_oversized_files():
     rows = [{"register_number": str(index)} for index in range(3)]
     _, errors = student_service.prepare_bulk_students(rows, 1, 2, maximum_rows=2)
     assert errors == ["Import at most 2 students at a time."]
+
+
+@pytest.mark.unit
+def test_lifecycle_history_is_loaded_newest_first(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        student_service, "_fetch_all",
+        lambda query, params=(): captured.update(query=query, params=params) or [],
+    )
+
+    student_service.get_lifecycle_history(8)
+
+    assert "student_lifecycle_history" in captured["query"]
+    assert "ORDER BY h.changed_at DESC" in captured["query"]
+    assert captured["params"] == (8,)

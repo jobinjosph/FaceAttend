@@ -19,6 +19,13 @@
             </tr>{% endfor %}</tbody>
         </table></div>{% else %}<div class="empty-state"><strong>No placement changes recorded</strong><p>This student has not been promoted or transferred yet.</p></div>{% endif %}
     </div>
+    <h2>Lifecycle history</h2>
+    <div class="table-card">
+        {% if lifecycle_history %}<div class="table-scroll"><table class="data-table">
+            <thead><tr><th>Date and time</th><th>Previous status</th><th>New status</th><th>Changed by</th></tr></thead>
+            <tbody>{% for item in lifecycle_history %}<tr><td>{{ item.changed_at.strftime('%d %b %Y, %I:%M %p') if item.changed_at else '—' }}</td><td>{{ item.previous_status|replace('_',' ')|title }}</td><td><span class="status-badge {{ 'active' if item.new_status == 'ACTIVE' else 'inactive' }}">{{ item.new_status|replace('_',' ')|title }}</span></td><td>{{ item.changed_by_name or 'System or former administrator' }}</td></tr>{% endfor %}</tbody>
+        </table></div>{% else %}<div class="empty-state"><strong>No lifecycle changes recorded</strong><p>This student has not been graduated, withdrawn, archived, or reactivated.</p></div>{% endif %}
+    </div>
     <a class="text-link" href="{{ url_for('admin_students.student_list', semester_id=student.semester_id) }}">← Back to Student Management</a>
 </div></section>
 {% endblock %}

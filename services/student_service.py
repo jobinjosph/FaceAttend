@@ -5,6 +5,7 @@ from services.auth_service import hash_password
 
 
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+LIFECYCLE_STATUSES = {"ACTIVE", "GRADUATED", "WITHDRAWN", "ARCHIVED"}
 
 
 def normalize_register_number(value):
@@ -59,25 +60,25 @@ def validate_student_data(data, require_password=False):
     return errors
 
 
-def list_students(semester_id):
+def list_students(semester_id, lifecycle_status="ACTIVE"):
     query = """
         SELECT s.id, s.user_id, s.register_number, s.full_name, s.email,
-               s.face_registered, s.is_active,
+               s.face_registered, s.is_active, s.lifecycle_status,
                c.code AS course_code, c.name AS course_name,
                sem.semester_number, sem.section, sem.academic_year
         FROM students s
         JOIN courses c ON c.id = s.course_id
         JOIN semesters sem ON sem.id = s.semester_id
-        WHERE s.semester_id = %s
+        WHERE s.semester_id = %s AND s.lifecycle_status = %s
         ORDER BY s.full_name, s.register_number
     """
-    return _fetch_all(query, (semester_id,))
+    return _fetch_all(query, (semester_id, lifecycle_status))
 
 
 def get_student(student_id):
     query = """
         SELECT id, user_id, register_number, full_name, email, course_id, semester_id,
-               face_registered, is_active
+               face_registered, is_active, lifecycle_status
         FROM students
         WHERE id = %s
     """
@@ -106,6 +107,18 @@ def get_placement_history(student_id):
            LEFT JOIN users mover ON mover.id=h.moved_by_user_id
            WHERE h.student_id=%s
            ORDER BY h.moved_at DESC, h.id DESC""",
+        (student_id,),
+    )
+
+
+def get_lifecycle_history(student_id):
+    return _fetch_all(
+        """SELECT h.previous_status, h.new_status, h.changed_at,
+                  changer.full_name AS changed_by_name
+           FROM student_lifecycle_history h
+           LEFT JOIN users changer ON changer.id=h.changed_by_user_id
+           WHERE h.student_id=%s
+           ORDER BY h.changed_at DESC, h.id DESC""",
         (student_id,),
     )
 
@@ -315,21 +328,41 @@ def update_student(student_id, data, moved_by_user_id=None):
 
 
 def set_student_active(student_id, is_active):
+    return set_student_lifecycle_status(
+        student_id, "ACTIVE" if is_active else "ARCHIVED", None
+    )
+
+
+def set_student_lifecycle_status(student_id, lifecycle_status, changed_by_user_id):
+    lifecycle_status = str(lifecycle_status).upper()
+    if lifecycle_status not in LIFECYCLE_STATUSES:
+        raise ValueError("Select a valid student status.")
     student = get_student(student_id)
     if student is None:
         return
-
+    previous_status = student.get("lifecycle_status") or (
+        "ACTIVE" if student.get("is_active", True) else "ARCHIVED"
+    )
+    if previous_status == lifecycle_status:
+        return
+    is_active = lifecycle_status == "ACTIVE"
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "UPDATE students SET is_active = %s WHERE id = %s",
-            (bool(is_active), student_id),
+            """INSERT INTO student_lifecycle_history
+                   (student_id, previous_status, new_status, changed_by_user_id)
+               VALUES (%s, %s, %s, %s)""",
+            (student_id, previous_status, lifecycle_status, changed_by_user_id),
+        )
+        cursor.execute(
+            "UPDATE students SET is_active=%s, lifecycle_status=%s WHERE id=%s",
+            (is_active, lifecycle_status, student_id),
         )
         if student.get("user_id"):
             cursor.execute(
                 "UPDATE users SET is_active = %s WHERE id = %s",
-                (bool(is_active), student["user_id"]),
+                (is_active, student["user_id"]),
             )
         connection.commit()
     except Exception:

@@ -27,6 +27,13 @@
         {% include "admin/_academic_context_selector.html" %}
         {% if context %}<p>{{ context.course_code }} · {{ context.academic_year }} · Semester {{ context.semester_number }} · Section {{ context.section }}</p>{% else %}<p>No active semester groups are configured. Add one in Academic Structure first.</p>{% endif %}
 
+        {% if context %}<form class="list-filter-form" method="get">
+            <input type="hidden" name="semester_id" value="{{ context.id }}">
+            <label class="form-field" for="student_status">Student status<select id="student_status" name="status" onchange="this.form.submit()">
+                {% for value, label in [('ACTIVE','Active'),('GRADUATED','Graduated'),('WITHDRAWN','Withdrawn'),('ARCHIVED','Archived')] %}<option value="{{ value }}" {{ 'selected' if selected_status == value }}>{{ label }}</option>{% endfor %}
+            </select></label>
+        </form>{% endif %}
+
         <div class="table-card">
             {% if students %}
                 <div class="table-scroll">
@@ -45,6 +52,7 @@
                         </thead>
                         <tbody>
                             {% for student in students %}
+                                {% set lifecycle = student.lifecycle_status|default('ACTIVE', true) %}
                                 <tr>
                                     <td><strong>{{ student.register_number }}</strong></td>
                                     <td>
@@ -67,20 +75,20 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="status-badge {{ 'active' if student.is_active else 'inactive' }}">
-                                            {{ 'Active' if student.is_active else 'Inactive' }}
+                                        <span class="status-badge {{ 'active' if lifecycle == 'ACTIVE' else 'inactive' }}">
+                                            {{ lifecycle|replace('_', ' ')|title }}
                                         </span>
                                     </td>
                                     <td class="table-actions">
                                         <a href="{{ url_for('admin_students.edit_student', student_id=student.id) }}">Edit</a>
                                         <a href="{{ url_for('admin_students.placement_history', student_id=student.id) }}">History</a>
                                         <a href="{{ url_for('admin_faces.register_face', student_id=student.id) }}">{{ 'Replace face' if student.face_registered else 'Register face' }}</a>
-                                        <form method="post" action="{{ url_for('admin_students.change_student_status', student_id=student.id) }}">
+                                        <form method="post" action="{{ url_for('admin_students.change_student_lifecycle', student_id=student.id) }}">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <input type="hidden" name="is_active" value="{{ 0 if student.is_active else 1 }}">
-                                            <button type="submit">
-                                                {{ 'Deactivate' if student.is_active else 'Activate' }}
-                                            </button>
+                                            <input type="hidden" name="return_status" value="{{ selected_status }}">
+                                            <select name="lifecycle_status" aria-label="Change status for {{ student.full_name }}">
+                                                {% for value, label in [('ACTIVE','Active'),('GRADUATED','Graduated'),('WITHDRAWN','Withdrawn'),('ARCHIVED','Archived')] %}<option value="{{ value }}" {{ 'selected' if lifecycle == value }}>{{ label }}</option>{% endfor %}
+                                            </select><button type="submit">Update</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -90,9 +98,9 @@
                 </div>
             {% else %}
                 <div class="empty-state">
-                    <strong>No students added yet</strong>
-                    <p>Add the first student to begin building your class list.</p>
-                    {% if context %}<a href="{{ url_for('admin_students.add_student', semester_id=context.id) }}">Add first student →</a>{% endif %}
+                    <strong>No {{ selected_status|lower }} students</strong>
+                    <p>{{ 'Add the first student to begin building your class list.' if selected_status == 'ACTIVE' else 'Students with this status will appear here.' }}</p>
+                    {% if context and selected_status == 'ACTIVE' %}<a href="{{ url_for('admin_students.add_student', semester_id=context.id) }}">Add first student →</a>{% endif %}
                 </div>
             {% endif %}
         </div>

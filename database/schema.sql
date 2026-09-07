@@ -43,6 +43,8 @@ CREATE TABLE IF NOT EXISTS students (
     course_id BIGINT UNSIGNED NOT NULL,
     semester_id BIGINT UNSIGNED NOT NULL,
     face_registered BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    lifecycle_status ENUM('ACTIVE', 'GRADUATED', 'WITHDRAWN', 'ARCHIVED') NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_student_user
         FOREIGN KEY (user_id) REFERENCES users(id)
@@ -67,6 +69,18 @@ CREATE TABLE IF NOT EXISTS student_placement_history (
     CONSTRAINT fk_placement_to_semester FOREIGN KEY (to_semester_id) REFERENCES semesters(id) ON DELETE RESTRICT,
     CONSTRAINT fk_placement_moved_by FOREIGN KEY (moved_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_placement_student_time (student_id, moved_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS student_lifecycle_history (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT UNSIGNED NOT NULL,
+    previous_status ENUM('ACTIVE', 'GRADUATED', 'WITHDRAWN', 'ARCHIVED') NOT NULL,
+    new_status ENUM('ACTIVE', 'GRADUATED', 'WITHDRAWN', 'ARCHIVED') NOT NULL,
+    changed_by_user_id BIGINT UNSIGNED NULL,
+    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_lifecycle_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    CONSTRAINT fk_lifecycle_changed_by FOREIGN KEY (changed_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_lifecycle_student_time (student_id, changed_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS faculty (

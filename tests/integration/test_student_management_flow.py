@@ -116,14 +116,14 @@ def test_student_can_be_deactivated(client, monkeypatch):
         lambda student_id: {"id": student_id, "is_active": True, "semester_id": 2},
     )
     monkeypatch.setattr(
-        "services.student_service.set_student_active",
-        lambda student_id, active: captured.update(id=student_id, active=active),
+        "services.student_service.set_student_lifecycle_status",
+        lambda student_id, status, admin: captured.update(id=student_id, status=status, admin=admin),
     )
 
     response = client.post("/admin/students/8/status", data={"is_active": "0"})
 
     assert response.status_code == 302
-    assert captured == {"id": 8, "active": False}
+    assert captured == {"id": 8, "status": "ARCHIVED", "admin": 1}
 
 
 @pytest.mark.integration
@@ -163,3 +163,28 @@ def test_placement_rejects_same_group_and_empty_selection(client, monkeypatch):
     assert response.status_code == 400
     assert b"Select at least one student" in response.data
     assert b"different from the current group" in response.data
+
+
+@pytest.mark.integration
+def test_admin_can_mark_student_as_graduated(client, monkeypatch):
+    login_admin(client)
+    captured = {}
+    monkeypatch.setattr(
+        "services.student_service.get_student",
+        lambda student_id: {"id": student_id, "semester_id": 2},
+    )
+    monkeypatch.setattr(
+        "services.student_service.set_student_lifecycle_status",
+        lambda student_id, status, admin: captured.update(
+            student_id=student_id, status=status, admin=admin
+        ),
+    )
+
+    response = client.post(
+        "/admin/students/8/lifecycle",
+        data={"lifecycle_status": "GRADUATED", "return_status": "ACTIVE"},
+    )
+
+    assert response.status_code == 302
+    assert captured == {"student_id": 8, "status": "GRADUATED", "admin": 1}
+    assert "semester_id=2" in response.headers["Location"]

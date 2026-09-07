@@ -44,13 +44,13 @@ def test_non_admin_roles_cannot_access_student_management(client, role):
 def test_admin_can_open_empty_student_list(client, monkeypatch):
     login_as(client, "ADMIN")
     monkeypatch.setattr("services.academic_context_service.list_active_contexts", academic_contexts)
-    monkeypatch.setattr("services.student_service.list_students", lambda semester_id: [])
+    monkeypatch.setattr("services.student_service.list_students", lambda semester_id, status="ACTIVE": [])
 
     response = client.get("/admin/students")
 
     assert response.status_code == 200
     assert b'<a class="apple-shop-button"' in response.data
-    assert b"No students added yet" in response.data
+    assert b"No active students" in response.data
 
 
 @pytest.mark.component
@@ -158,6 +158,7 @@ def test_admin_can_view_student_placement_history(client, monkeypatch):
             "moved_by_name": "Admin",
         }],
     )
+    monkeypatch.setattr("services.student_service.get_lifecycle_history", lambda student_id: [])
 
     response = client.get("/admin/students/8/placement-history")
 
@@ -240,3 +241,20 @@ def test_bulk_import_reports_csv_row_errors_without_writing(client, monkeypatch)
     assert response.status_code == 400
     assert b"Row 3" in response.data
     assert b"duplicated in this file" in response.data
+
+
+@pytest.mark.component
+def test_student_list_filters_by_lifecycle_status(client, monkeypatch):
+    login_as(client, "ADMIN")
+    captured = {}
+    monkeypatch.setattr("services.academic_context_service.list_active_contexts", academic_contexts)
+    monkeypatch.setattr(
+        "services.student_service.list_students",
+        lambda semester_id, status: captured.update(semester_id=semester_id, status=status) or [],
+    )
+
+    response = client.get("/admin/students?semester_id=2&status=GRADUATED")
+
+    assert response.status_code == 200
+    assert captured == {"semester_id": 2, "status": "GRADUATED"}
+    assert b"No graduated students" in response.data

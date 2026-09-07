@@ -36,16 +36,17 @@ def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
     def update_student(student_id, data, moved_by_user_id=None):
         students[0].update(data)
 
-    def set_active(student_id, active):
-        students[0]["is_active"] = active
+    def set_lifecycle(student_id, status, admin):
+        students[0]["lifecycle_status"] = status
+        students[0]["is_active"] = status == "ACTIVE"
 
     monkeypatch.setattr("services.academic_context_service.list_active_contexts", lambda: contexts)
     monkeypatch.setattr("services.student_service.active_semester_belongs_to_course", lambda *args: True)
     monkeypatch.setattr("services.student_service.create_student", create_student)
-    monkeypatch.setattr("services.student_service.list_students", lambda semester_id: students)
+    monkeypatch.setattr("services.student_service.list_students", lambda semester_id, status="ACTIVE": students)
     monkeypatch.setattr("services.student_service.get_student", lambda student_id: students[0] if students else None)
     monkeypatch.setattr("services.student_service.update_student", update_student)
-    monkeypatch.setattr("services.student_service.set_student_active", set_active)
+    monkeypatch.setattr("services.student_service.set_student_lifecycle_status", set_lifecycle)
 
     with client.session_transaction() as user_session:
         user_session["user_id"] = 1
@@ -89,4 +90,4 @@ def test_admin_can_add_view_edit_and_deactivate_student(client, monkeypatch):
         follow_redirects=True,
     )
     assert deactivated.status_code == 200
-    assert b"Inactive" in deactivated.data
+    assert b"Archived" in deactivated.data

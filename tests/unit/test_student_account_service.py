@@ -88,7 +88,7 @@ def test_update_linked_student_keeps_password_when_blank(monkeypatch):
 
 @pytest.mark.unit
 def test_student_activation_status_is_synchronized_to_login(monkeypatch):
-    cursor = FakeCursor()
+    cursor = FakeCursor((1,))
     connection = FakeConnection(cursor)
     monkeypatch.setattr(
         student_service,
@@ -100,8 +100,29 @@ def test_student_activation_status_is_synchronized_to_login(monkeypatch):
     student_service.set_student_active(8, False)
 
     assert connection.committed is True
-    assert cursor.calls[0][1] == (False, 8)
-    assert cursor.calls[1][1] == (False, 40)
+    assert "student_lifecycle_history" in cursor.calls[0][0]
+    assert cursor.calls[0][1] == (8, "ACTIVE", "ARCHIVED", None)
+    assert cursor.calls[1][1] == (False, "ARCHIVED", 8)
+    assert cursor.calls[2][1] == (False, 40)
+
+
+@pytest.mark.unit
+def test_graduating_student_is_audited_and_disables_login(monkeypatch):
+    cursor = FakeCursor((1,))
+    connection = FakeConnection(cursor)
+    monkeypatch.setattr(
+        student_service, "get_student",
+        lambda student_id: {"id": student_id, "user_id": 40, "is_active": True,
+                            "lifecycle_status": "ACTIVE"},
+    )
+    monkeypatch.setattr(student_service, "get_db_connection", lambda: connection)
+
+    student_service.set_student_lifecycle_status(8, "GRADUATED", 5)
+
+    assert cursor.calls[0][1] == (8, "ACTIVE", "GRADUATED", 5)
+    assert cursor.calls[1][1] == (False, "GRADUATED", 8)
+    assert cursor.calls[2][1] == (False, 40)
+    assert connection.committed is True
 
 
 @pytest.mark.unit
