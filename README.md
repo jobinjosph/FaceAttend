@@ -27,7 +27,7 @@ events for each active period.
 - Interactive command for creating the first administrator
 - Admin student management: list, add, edit, activate and deactivate
 - Versioned database migrations applied safely by `init_db.py`
-- Twenty-four PG programmes with Semester 1–4 options
+- A focused four-programme demo dataset (BCA, MCA, BCOM and MSW) with Semester 1–4 and Sections A–B
 - Admin faculty management with linked secure Faculty Portal accounts
 
 Face recognition is intentionally not included yet. It will be introduced only
