@@ -80,6 +80,13 @@ def validate_and_resolve(data, exclude_period_id=None, semester_id=None):
     return errors, assignment
 
 
+def add_conflict_error(errors, conflict_type):
+    if conflict_type == "semester":
+        errors["start_time"] = "This class overlaps another period in this semester group."
+    else:
+        errors["start_time"] = "This faculty member is teaching another class at that time."
+
+
 @admin_timetable_bp.route("/add", methods=["GET", "POST"])
 @role_required("ADMIN")
 def add_period():
@@ -97,6 +104,9 @@ def add_period():
         return render_period_form(data,errors,400,semester_id)
     try:
         timetable_service.create_period(data, assignment)
+    except timetable_service.TimetableConflictError as exc:
+        add_conflict_error(errors, exc.conflict_type)
+        return render_period_form(data, errors, 409, semester_id)
     except mysql.connector.IntegrityError:
         errors["period_number"] = "That period number is already used on this day."
         return render_period_form(data, errors, 409, semester_id)
@@ -123,6 +133,9 @@ def edit_period(period_id):
         return render_period_form(data, errors, 400, period.get("semester_id"))
     try:
         timetable_service.update_period(period_id, data, assignment)
+    except timetable_service.TimetableConflictError as exc:
+        add_conflict_error(errors, exc.conflict_type)
+        return render_period_form(data, errors, 409, period.get("semester_id"))
     except mysql.connector.IntegrityError:
         errors["period_number"] = "That period number is already used on this day."
         return render_period_form(data, errors, 409, period.get("semester_id"))

@@ -1,6 +1,8 @@
 import mysql.connector
 import pytest
 
+from services import timetable_service
+
 
 @pytest.fixture(autouse=True)
 def academic_context(monkeypatch):
@@ -53,6 +55,30 @@ def test_duplicate_day_period_is_rejected(client, monkeypatch):
     response = client.post("/admin/timetable/add", data=VALID)
     assert response.status_code == 409
     assert b"period number is already used" in response.data
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "conflict,message",
+    [("semester", b"overlaps another period in this semester group"),
+     ("faculty", b"teaching another class")],
+)
+def test_conflict_detected_during_write_is_rejected(client, monkeypatch, conflict, message):
+    login(client)
+    monkeypatch.setattr("services.timetable_service.get_assignment", lambda assignment_id, semester_id: ASSIGNMENT)
+    monkeypatch.setattr("services.timetable_service.find_conflict", lambda *args: None)
+    monkeypatch.setattr("services.timetable_service.get_assignment_options", lambda semester_id: [])
+    monkeypatch.setattr(
+        "services.timetable_service.create_period",
+        lambda *args: (_ for _ in ()).throw(
+            timetable_service.TimetableConflictError(conflict)
+        ),
+    )
+
+    response = client.post("/admin/timetable/add", data=VALID)
+
+    assert response.status_code == 409
+    assert message in response.data
 
 
 @pytest.mark.integration

@@ -6,6 +6,14 @@ from db import get_db_connection
 DAYS = {1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday"}
 
 
+class TimetableConflictError(Exception):
+    """Raised when a timetable write conflicts with an existing period."""
+
+    def __init__(self, conflict_type):
+        self.conflict_type = conflict_type
+        super().__init__(conflict_type)
+
+
 def normalize_period_data(form_data):
     data = {}
     for field in ("assignment_id", "day_of_week", "period_number"):
@@ -150,6 +158,23 @@ def _write_period(period_id, data, assignment):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
+        # Lock stable parent rows before the final conflict check. This serializes
+        # writes for the same group/faculty so concurrent requests cannot both
+        # pass validation and create overlapping periods.
+        cursor.execute("SELECT id FROM semesters WHERE id = %s FOR UPDATE", (assignment["semester_id"],))
+        if cursor.fetchone() is None:
+            raise ValueError("The selected semester group no longer exists.")
+
+        faculty_id = assignment.get("faculty_id")
+        if faculty_id is not None:
+            cursor.execute("SELECT id FROM faculty WHERE id = %s FOR UPDATE", (faculty_id,))
+            if cursor.fetchone() is None:
+                raise ValueError("The selected faculty member no longer exists.")
+
+        conflict = _find_conflict_with_cursor(cursor, data, assignment, period_id)
+        if conflict:
+            raise TimetableConflictError(conflict)
+
         values = (assignment["semester_id"], assignment.get("subject_id"), assignment.get("faculty_id"),
                   data.get("activity_name") or None, data["day_of_week"], data["period_number"],
                   data["start_time"], data["end_time"])
@@ -175,6 +200,36 @@ def _write_period(period_id, data, assignment):
     finally:
         cursor.close()
         connection.close()
+
+
+def _find_conflict_with_cursor(cursor, data, assignment, exclude_period_id=None):
+    exclusion = " AND id <> %s" if exclude_period_id else ""
+    common = [data["day_of_week"], data["end_time"], data["start_time"]]
+    tail = [exclude_period_id] if exclude_period_id else []
+
+    cursor.execute(
+        f"""
+        SELECT id FROM timetable_periods
+        WHERE day_of_week = %s AND start_time < %s AND end_time > %s
+          AND semester_id = %s{exclusion} LIMIT 1 FOR UPDATE
+        """,
+        tuple(common + [assignment["semester_id"]] + tail),
+    )
+    if cursor.fetchone():
+        return "semester"
+
+    faculty_id = assignment.get("faculty_id")
+    if faculty_id is None:
+        return None
+    cursor.execute(
+        f"""
+        SELECT id FROM timetable_periods
+        WHERE day_of_week = %s AND start_time < %s AND end_time > %s
+          AND faculty_id = %s{exclusion} LIMIT 1 FOR UPDATE
+        """,
+        tuple(common + [faculty_id] + tail),
+    )
+    return "faculty" if cursor.fetchone() else None
 
 
 def delete_period(period_id):
