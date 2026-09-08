@@ -204,6 +204,22 @@ DB_PASSWORD=YOUR_PASSWORD_HERE
 
 Do not commit `.env` to Git.
 
+For a deployed HTTPS installation, generate and keep a stable random secret and
+disable debug mode:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Then set the generated value and secure-cookie options in the deployment
+environment:
+
+```env
+SECRET_KEY=PASTE_THE_GENERATED_VALUE_HERE
+FLASK_DEBUG=0
+SESSION_COOKIE_SECURE=1
+```
+
 ## 6. Create the FaceAttend MySQL database
 
 Make sure MySQL is running:
@@ -266,7 +282,7 @@ A successful database response should look similar to:
 ```json
 {
   "database": "ok",
-  "message": "Connected to faceattend on MySQL ..."
+  "message": "Database connection is healthy."
 }
 ```
 

@@ -89,6 +89,20 @@ def test_report_exports_csv_and_pdf(client, monkeypatch):
 
 
 @pytest.mark.component
+def test_staff_csv_export_escapes_spreadsheet_formulas(client, monkeypatch):
+    login(client, "FACULTY")
+    report = sample_cohort_report({"id": 7, "full_name": "=DANGEROUS()"})
+    report["history"][0]["student_name"] = "@DANGEROUS"
+    monkeypatch.setattr("services.report_service.get_cohort_report", lambda *args: report)
+
+    response = client.get("/reports/attendance/export.csv")
+
+    assert response.status_code == 200
+    assert b"'=DANGEROUS()" in response.data
+    assert b"'@DANGEROUS" in response.data
+
+
+@pytest.mark.component
 def test_admin_report_filters_selected_non_mca_semester(client, monkeypatch):
     login(client, "ADMIN")
     mock_academic_context(monkeypatch)

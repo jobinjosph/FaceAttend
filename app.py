@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, session
 import mysql.connector
 from config import Config
 from extensions import csrf
@@ -52,6 +52,19 @@ def create_app(test_config=None):
     def handle_database_error(error):
         app.logger.error("Unhandled database error: %s", error)
         return render_template("errors/database.html"), 503
+
+    @app.after_request
+    def add_security_headers(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Permissions-Policy", "camera=(self), microphone=(), geolocation=()"
+        )
+        if session.get("user_id"):
+            response.headers["Cache-Control"] = "no-store, private"
+            response.headers["Pragma"] = "no-cache"
+        return response
 
     return app
 

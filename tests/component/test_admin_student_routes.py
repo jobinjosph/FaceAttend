@@ -244,6 +244,34 @@ def test_bulk_import_reports_csv_row_errors_without_writing(client, monkeypatch)
 
 
 @pytest.mark.component
+def test_bulk_import_rejects_more_than_the_safe_row_limit(client, monkeypatch):
+    login_as(client, "ADMIN")
+    monkeypatch.setattr(
+        "services.academic_context_service.get_active_context",
+        lambda semester_id: academic_contexts()[0],
+    )
+    monkeypatch.setattr("services.student_service.MAX_BULK_IMPORT_ROWS", 1)
+    monkeypatch.setattr(
+        "services.student_service.bulk_create_students",
+        lambda rows: pytest.fail("oversized row batches must not be written"),
+    )
+    csv_data = (
+        b"register_number,full_name,email,initial_password\n"
+        b"25MCA001,Student One,one@example.com,Student123\n"
+        b"25MCA002,Student Two,two@example.com,Student123\n"
+    )
+
+    response = client.post(
+        "/admin/students/import",
+        data={"semester_id": "2", "csv_file": (BytesIO(csv_data), "students.csv")},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 400
+    assert b"Import at most 1 students at a time" in response.data
+
+
+@pytest.mark.component
 def test_student_list_filters_by_lifecycle_status(client, monkeypatch):
     login_as(client, "ADMIN")
     captured = {}

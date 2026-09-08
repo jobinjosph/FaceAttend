@@ -4,6 +4,9 @@ from db import get_db_connection
 from services.auth_service import hash_password
 
 
+MAX_BULK_IMPORT_ROWS = 1000
+
+
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 LIFECYCLE_STATUSES = {"ACTIVE", "GRADUATED", "WITHDRAWN", "ARCHIVED"}
 

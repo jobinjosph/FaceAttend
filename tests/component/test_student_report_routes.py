@@ -71,6 +71,21 @@ def test_unlinked_student_gets_helpful_message(client, monkeypatch):
 
 
 @pytest.mark.component
+def test_student_csv_export_escapes_spreadsheet_formulas(client, monkeypatch):
+    login(client)
+    report = sample_report()
+    report["student"]["full_name"] = "=DANGEROUS()"
+    report["history"][0]["subject_name"] = "+DANGEROUS()"
+    monkeypatch.setattr("services.report_service.get_student_report", lambda *args: report)
+
+    response = client.get("/student/attendance/export.csv")
+
+    assert response.status_code == 200
+    assert b"'=DANGEROUS()" in response.data
+    assert b"'+DANGEROUS()" in response.data
+
+
+@pytest.mark.component
 def test_student_cannot_open_an_unrecorded_placement(client, monkeypatch):
     login(client)
     report = sample_report()

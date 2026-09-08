@@ -1,7 +1,7 @@
 import mysql.connector
 from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
 
-from services.auth_service import find_user_by_email, verify_password
+from services.auth_service import DUMMY_PASSWORD_HASH, find_user_by_email, verify_password
 
 
 auth_bp = Blueprint("auth", __name__)
@@ -11,6 +11,7 @@ ROLE_DASHBOARDS = {
     "FACULTY": "dashboard.faculty_dashboard",
     "STUDENT": "dashboard.student_dashboard",
 }
+INVALID_LOGIN_MESSAGE = "Incorrect email or password."
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -43,12 +44,9 @@ def login():
             flash("Login is temporarily unavailable. Please try again later.", "error")
             return render_template("auth/login.html", email=email), 503
 
-        if not user:
-            flash("Incorrect email or password.", "error")
-            return render_template("auth/login.html", email=email), 401
-
-        if not verify_password(user["password_hash"], password):
-            flash("Incorrect password. Please try again.", "error")
+        password_hash = user["password_hash"] if user else DUMMY_PASSWORD_HASH
+        if not verify_password(password_hash, password) or not user:
+            flash(INVALID_LOGIN_MESSAGE, "error")
             return render_template("auth/login.html", email=email), 401
 
         if not user["is_active"]:
@@ -65,6 +63,7 @@ def login():
         session["full_name"] = user["full_name"]
         session["email"] = user["email"]
         session["role"] = user["role"]
+        session.permanent = True
 
         return redirect(url_for(endpoint))
 

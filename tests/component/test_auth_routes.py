@@ -39,7 +39,7 @@ def test_login_page_can_display_incorrect_password_message(client, monkeypatch):
     )
 
     assert response.status_code == 401
-    assert b"Incorrect password. Please try again." in response.data
+    assert b"Incorrect email or password." in response.data
 
 
 @pytest.mark.component

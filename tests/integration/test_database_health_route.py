@@ -11,7 +11,10 @@ def test_database_health_reports_success_without_real_database(client, monkeypat
     response = client.get("/health/database")
 
     assert response.status_code == 200
-    assert response.get_json()["database"] == "ok"
+    assert response.get_json() == {
+        "database": "ok",
+        "message": "Database connection is healthy.",
+    }
 
 
 @pytest.mark.integration
@@ -26,5 +29,5 @@ def test_database_health_reports_failure_without_real_database(client, monkeypat
     assert response.status_code == 503
     assert response.get_json() == {
         "database": "error",
-        "message": "Database unavailable",
+        "message": "Database connection is unavailable.",
     }

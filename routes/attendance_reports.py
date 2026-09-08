@@ -4,7 +4,7 @@ import io
 from flask import Blueprint, Response, abort, render_template, request, session
 
 from decorators.auth import role_required
-from services import academic_context_service, pdf_service, report_service
+from services import academic_context_service, csv_service, pdf_service, report_service
 
 
 attendance_reports_bp = Blueprint("attendance_reports", __name__, url_prefix="/reports/attendance")
@@ -36,7 +36,9 @@ def export_csv():
     output = io.StringIO(newline="")
     writer = csv.writer(output)
     writer.writerow(["FaceAttend attendance report"])
-    writer.writerow(["Scope", report["faculty"]["full_name"] if report["faculty"] else "All faculty"])
+    writer.writerow(csv_service.safe_row(
+        ["Scope", report["faculty"]["full_name"] if report["faculty"] else "All faculty"]
+    ))
     writer.writerow(["Attendance percentage", f'{report["summary"]["percentage"]}%'])
     writer.writerow([])
     writer.writerow([
@@ -44,13 +46,13 @@ def export_csv():
         "Faculty", "Status", "Entry", "Exit", "Duration", "Method",
     ])
     for row in report["history"]:
-        writer.writerow([
+        writer.writerow(csv_service.safe_row([
             row["session_date"], row["period_number"], row["register_number"],
             row["student_name"], row["subject_code"], row["subject_name"],
             row["faculty_name"], row["status"], _time_text(row.get("first_entry")),
             _time_text(row.get("last_exit")), row["duration_label"],
             row.get("marking_method") or "",
-        ])
+        ]))
     return Response(
         output.getvalue(), mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=faceattend-cohort-attendance.csv"},

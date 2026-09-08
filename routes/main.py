@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, render_template
+from flask import Blueprint, current_app, jsonify, render_template
 
 from db import database_health
 
@@ -23,12 +23,17 @@ def health():
 @main_bp.get("/health/database")
 def database_status():
     ok, message = database_health()
+    if not ok:
+        current_app.logger.warning("Database health check failed: %s", message)
 
     return (
         jsonify(
             {
                 "database": "ok" if ok else "error",
-                "message": message,
+                "message": (
+                    "Database connection is healthy."
+                    if ok else "Database connection is unavailable."
+                ),
             }
         ),
         200 if ok else 503,

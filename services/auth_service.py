@@ -21,6 +21,11 @@ def verify_password(password_hash, password):
     return check_password_hash(password_hash, password)
 
 
+# Used when an email does not exist so failed logins still perform one password
+# hash comparison and do not reveal registered addresses through timing.
+DUMMY_PASSWORD_HASH = hash_password("faceattend-invalid-login-placeholder")
+
+
 def find_user_by_email(email):
     """Return one user as a dictionary, or None when it does not exist."""
     connection = None

@@ -172,14 +172,21 @@ def bulk_import():
                     errors.append("Use the CSV template without changing its four column headings.")
                 else:
                     rows = list(reader)
-                    prepared, row_errors = student_service.prepare_bulk_students(
-                        rows, context["course_id"], context["id"]
-                    )
-                    errors.extend(row_errors)
-                    if not errors:
-                        imported = student_service.bulk_create_students(prepared)
-                        flash(f"{imported} student{'s' if imported != 1 else ''} enrolled successfully.", "success")
-                        return redirect(url_for("admin_students.student_list", semester_id=context["id"]))
+                    if not rows:
+                        errors.append("The CSV file does not contain any student rows.")
+                    elif len(rows) > student_service.MAX_BULK_IMPORT_ROWS:
+                        errors.append(
+                            f"Import at most {student_service.MAX_BULK_IMPORT_ROWS} students at a time."
+                        )
+                    else:
+                        prepared, row_errors = student_service.prepare_bulk_students(
+                            rows, context["course_id"], context["id"]
+                        )
+                        errors.extend(row_errors)
+                        if not errors:
+                            imported = student_service.bulk_create_students(prepared)
+                            flash(f"{imported} student{'s' if imported != 1 else ''} enrolled successfully.", "success")
+                            return redirect(url_for("admin_students.student_list", semester_id=context["id"]))
             except UnicodeDecodeError:
                 errors.append("The CSV file must use UTF-8 text encoding.")
             except ValueError as exc:

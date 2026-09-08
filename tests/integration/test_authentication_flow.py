@@ -94,7 +94,7 @@ def test_invalid_password_does_not_create_session(client, monkeypatch):
     )
 
     assert response.status_code == 401
-    assert b"Incorrect password. Please try again." in response.data
+    assert b"Incorrect email or password." in response.data
     with client.session_transaction() as user_session:
         assert "user_id" not in user_session
 
@@ -110,6 +110,27 @@ def test_unknown_email_is_rejected(client, monkeypatch):
 
     assert response.status_code == 401
     assert b"Incorrect email or password." in response.data
+
+
+@pytest.mark.integration
+def test_unknown_email_still_performs_password_hash_check(client, monkeypatch):
+    captured = {}
+    monkeypatch.setattr("routes.auth.find_user_by_email", lambda email: None)
+    monkeypatch.setattr(
+        "routes.auth.verify_password",
+        lambda password_hash, password: captured.update(
+            password_hash=password_hash, password=password
+        ) or False,
+    )
+
+    response = client.post(
+        "/login",
+        data={"email": "unknown@example.com", "password": "SomePassword123"},
+    )
+
+    assert response.status_code == 401
+    assert captured["password_hash"]
+    assert captured["password"] == "SomePassword123"
 
 
 @pytest.mark.integration
