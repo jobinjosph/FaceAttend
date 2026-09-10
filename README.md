@@ -1,8 +1,10 @@
-# FaceAttend — Phase 1
+# FaceAttend
 
-FaceAttend is a Flask + MySQL foundation for a period-based student attendance
-system. The future face-recognition module will record student entry and exit
-events for each active period.
+FaceAttend is a Flask + MySQL student attendance project with academic management,
+camera-based entry/exit recording, faculty review, student reports and corrections.
+
+Release guides: [Deployment](docs/DEPLOYMENT.md), [Demo setup and verification](docs/DEMO.md),
+[Presentation and limitations](docs/PRESENTATION.md).
 
 ## What already works
 
@@ -30,8 +32,9 @@ events for each active period.
 - A focused four-programme demo dataset (BCA, MCA, BCOM and MSW) with Semester 1–4 and Sections A–B
 - Admin faculty management with linked secure Faculty Portal accounts
 
-Face recognition is intentionally not included yet. It will be introduced only
-after the academic management features are working and tested.
+Also implemented: face enrolment and matching using YuNet/SFace, dated attendance
+sessions, manual attendance, faculty confirmation, CSV/PDF reports, correction
+requests, student placement history, lifecycle management and bulk CSV enrolment.
 
 ---
 
@@ -317,7 +320,7 @@ FaceAttend/
 
 ---
 
-# Development roadmap
+# Implemented development phases
 
 ## Phase 2
 - Login
