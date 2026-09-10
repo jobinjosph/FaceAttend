@@ -73,7 +73,7 @@ def list_students(semester_id, lifecycle_status="ACTIVE"):
         JOIN courses c ON c.id = s.course_id
         JOIN semesters sem ON sem.id = s.semester_id
         WHERE s.semester_id = %s AND s.lifecycle_status = %s
-        ORDER BY s.full_name, s.register_number
+        ORDER BY s.register_number
     """
     return _fetch_all(query, (semester_id, lifecycle_status))
 
