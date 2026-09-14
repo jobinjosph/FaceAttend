@@ -1566,7 +1566,12 @@ a {
     min-height: 58px;
 }
 
-.student-management-page .academic-context-filters select {
+.student-management-page .student-status-filter {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.student-management-page .academic-context-filters select,
+.student-management-page .student-status-filter select {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;

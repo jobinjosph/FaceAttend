@@ -27,7 +27,7 @@
         {% include "admin/_academic_context_selector.html" %}
         {% if context %}<p>{{ context.course_code }} · {{ context.academic_year }} · Semester {{ context.semester_number }} · Section {{ context.section }}</p>{% else %}<p>No active semester groups are configured. Add one in Academic Structure first.</p>{% endif %}
 
-        {% if context %}<form class="list-filter-form" method="get">
+        {% if context %}<form class="list-filter-form student-status-filter" method="get">
             <input type="hidden" name="semester_id" value="{{ context.id }}">
             <label class="form-field" for="student_status">Student status<select id="student_status" name="status" onchange="this.form.submit()">
                 {% for value, label in [('ACTIVE','Active'),('GRADUATED','Graduated'),('WITHDRAWN','Withdrawn'),('ARCHIVED','Archived')] %}<option value="{{ value }}" {{ 'selected' if selected_status == value }}>{{ label }}</option>{% endfor %}
