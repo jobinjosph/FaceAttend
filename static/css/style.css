@@ -1595,7 +1595,8 @@ a {
 }
 
 .subject-filter-submit {
-    transform: translateY(-50%);
+    transform: none;
+    align-self: center;
 }
 
 @media (max-width: 700px) {
