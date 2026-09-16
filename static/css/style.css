@@ -1388,6 +1388,15 @@ a {
     height: 49px;
 }
 
+[data-placement-form] > .form-field {
+    margin-bottom: 24px;
+}
+
+[data-placement-form] #destination_semester_id {
+    height: 49px;
+    box-sizing: border-box;
+}
+
 .course-combobox {
     position: relative;
 }

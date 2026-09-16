@@ -6,7 +6,7 @@
     <meta name="description" content="FaceAttend - smart period-based student attendance using face recognition.">
     <title>{% block title %}FaceAttend{% endblock %}</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='21') }}">
 </head>
 <body>
     {% set dashboard_endpoint = {'ADMIN': 'dashboard.admin_dashboard', 'FACULTY': 'dashboard.faculty_dashboard', 'STUDENT': 'dashboard.student_dashboard'}.get(session.get('role')) %}
