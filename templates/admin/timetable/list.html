@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Manage Timetable | FaceAttend{% endblock %}
 {% block content %}
-<section class="dashboard-section"><div class="container">
+<section class="dashboard-section timetable-management-page"><div class="container">
 <div class="page-heading-row"><div><span class="section-kicker">Admin · Academic setup</span><h1>Manage Timetable</h1><p>Schedule periods across programmes, semesters, and sections.</p></div><a class="apple-shop-button" href="{{ url_for('admin_timetable.add_period',semester_id=context.id if context) }}">Add period</a></div>
 {% include "admin/_academic_context_selector.html" %}
 {% if context %}<p>{{ context.course_code }} · {{ context.academic_year }} · Semester {{ context.semester_number }} · Section {{ context.section }}</p>{% else %}<p>No active semester groups are configured. Add one in Academic Structure first.</p>{% endif %}
