@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Manage Subjects | FaceAttend{% endblock %}
 {% block content %}
-<section class="dashboard-section"><div class="container">
+<section class="dashboard-section subject-management-page"><div class="container">
     <div class="page-heading-row">
         <div><span class="section-kicker">Admin · Academic setup</span><h1>Manage Subjects</h1><p>Manage subjects across programmes, semesters, and sections.</p></div>
         <a class="apple-shop-button" href="{{ url_for('admin_subjects.add_subject',semester_id=context.id if context) }}">Add subject</a>
