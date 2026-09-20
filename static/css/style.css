@@ -1583,7 +1583,8 @@ a {
  .student-management-page .student-status-filter select,
  .timetable-management-page .academic-context-filters select,
 .faculty-assignments-page .academic-context-filters select,
-.subject-management-page .academic-context-filters select {
+.subject-management-page .academic-context-filters select,
+.attendance-sessions-page .academic-context-filters select {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
