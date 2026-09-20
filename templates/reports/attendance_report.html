@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Attendance Reports | FaceAttend{% endblock %}
 {% block content %}
-<section class="dashboard-section"><div class="container">
+<section class="dashboard-section attendance-reports-page"><div class="container">
     <div class="page-heading-row"><div><span class="section-kicker">{{ session.role|title }} · Reports</span><h1>Attendance Reports</h1><p>{% if report.faculty %}Only classes handled by {{ report.faculty.full_name }} are included.{% else %}Review confirmed attendance across all faculty and subjects.{% endif %}</p></div><div class="report-export-actions"><a class="apple-shop-button apple-shop-button-grey" href="{{ url_for('attendance_reports.export_csv', **filters) }}">Export CSV</a><a class="apple-shop-button" href="{{ url_for('attendance_reports.export_pdf', **filters) }}">Export PDF</a></div></div>
 
     {% if session.role == 'ADMIN' %}
