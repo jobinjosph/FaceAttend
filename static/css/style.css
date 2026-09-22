@@ -1605,6 +1605,17 @@ a {
     cursor: pointer;
 }
 
+.timetable-period-page #day_of_week,
+.timetable-period-page #period_number,
+.timetable-period-page #start_time,
+.timetable-period-page #end_time {
+    width: 100%;
+    min-width: 0;
+    height: 49px;
+    min-height: 49px;
+    box-sizing: border-box;
+}
+
 .subject-filter-spacer {
     align-self: end;
     visibility: hidden;
