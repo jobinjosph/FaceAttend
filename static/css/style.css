@@ -1585,7 +1585,8 @@ a {
 .faculty-assignments-page .academic-context-filters select,
 .subject-management-page .academic-context-filters select,
 .attendance-sessions-page .academic-context-filters select,
-.attendance-reports-page .academic-context-filters select {
+.attendance-reports-page .academic-context-filters select,
+.correction-requests-page .academic-context-filters select {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;

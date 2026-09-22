@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Correction Requests | FaceAttend{% endblock %}
 {% block content %}
-<section class="dashboard-section"><div class="container">
+<section class="dashboard-section correction-requests-page"><div class="container">
     <div class="page-heading-row"><div><span class="section-kicker">{{ session.role|title }} · Attendance</span><h1>Correction Requests</h1><p>{% if session.role=='FACULTY' %}Only requests from classes handled by you are shown.{% else %}Review correction requests from all confirmed classes.{% endif %}</p></div></div>
     {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="alert alert-{{ category }}" role="alert">{{ message }}</div>{% endfor %}{% endwith %}
     {% if session.role == 'ADMIN' %}{% include "admin/_academic_context_selector.html" %}{% if context %}<p>{{ context.course_code }} · {{ context.academic_year }} · Semester {{ context.semester_number }} · Section {{ context.section }}</p>{% else %}<p>No active semester groups are configured. Add one in Academic Structure first.</p>{% endif %}{% endif %}
