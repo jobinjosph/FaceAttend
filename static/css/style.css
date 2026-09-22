@@ -1586,7 +1586,8 @@ a {
 .subject-management-page .academic-context-filters select,
 .attendance-sessions-page .academic-context-filters select,
 .attendance-reports-page .academic-context-filters select,
-.correction-requests-page .academic-context-filters select {
+.correction-requests-page .academic-context-filters select,
+.timetable-period-page .form-field select {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
