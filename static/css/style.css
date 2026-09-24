@@ -1388,6 +1388,15 @@ a {
     height: 49px;
 }
 
+.student-login-field {
+    align-content: start;
+}
+
+.student-login-field input {
+    height: 72px;
+    min-height: 72px;
+}
+
 [data-placement-form] > .form-field {
     margin-bottom: 24px;
 }

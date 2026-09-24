@@ -36,13 +36,13 @@
                     {% if errors.get('full_name') %}<small class="field-error">{{ errors.full_name }}</small>{% endif %}
                 </div>
 
-                <div class="form-field">
+                <div class="form-field student-login-field">
                     <label for="email">Student login email</label>
                     <input id="email" name="email" type="email" value="{{ student.get('email') or '' }}" required>
                     {% if errors.get('email') %}<small class="field-error">{{ errors.email }}</small>{% endif %}
                 </div>
 
-                <div class="form-field">
+                <div class="form-field student-login-field">
                     <label for="password">
                         {{ 'New password' if is_edit and student.get('user_id') else 'Initial password' }}
                         {% if is_edit and student.get('user_id') %}<span>Optional</span>{% endif %}
