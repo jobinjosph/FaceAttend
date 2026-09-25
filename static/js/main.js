@@ -1,4 +1,11 @@
 const menuButton = document.querySelector(".menu-button");
+const subjectStatusFilter = document.querySelector("[data-subject-status-filter]");
+if (subjectStatusFilter) {
+    subjectStatusFilter.addEventListener("change", () => {
+        subjectStatusFilter.form.requestSubmit();
+    });
+}
+
 const navLinks = document.querySelector(".nav-links");
 
 if (menuButton && navLinks) {

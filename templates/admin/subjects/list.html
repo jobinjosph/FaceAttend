@@ -10,7 +10,7 @@
     {% include "admin/_academic_context_selector.html" %}
     <form class="list-filter-form" method="get"><input type="hidden" name="semester_id" value="{{ context.id if context }}">
         <input name="search" value="{{ search }}" placeholder="Search code or subject name" aria-label="Search subjects">
-        <select name="status" aria-label="Filter by status">
+        <select name="status" aria-label="Filter by status" data-subject-status-filter>
             <option value="all" {{ 'selected' if status_filter == 'all' }}>All statuses</option>
             <option value="active" {{ 'selected' if status_filter == 'active' }}>Active</option>
             <option value="inactive" {{ 'selected' if status_filter == 'inactive' }}>Inactive</option>
