@@ -2,7 +2,7 @@
 {% set is_edit = programme.id is defined %}
 {% block title %}{{ 'Edit' if is_edit else 'Add' }} Programme | FaceAttend{% endblock %}
 {% block content %}
-<section class="dashboard-section"><div class="narrow-container">
+<section class="dashboard-section"><div class="container narrow-container">
     <div class="page-heading-row"><div><span class="section-kicker">Admin · Academic setup</span><h1>{{ 'Edit programme' if is_edit else 'Add programme' }}</h1><p>{% if is_edit %}Changing these details does not delete connected academic records.{% else %}Create a programme without manually changing the source code.{% endif %}</p></div></div>
     <form method="post" class="student-form-card" {% if is_edit %}data-confirm-edit="Editing a programme changes how its existing academic records are displayed. Continue?"{% endif %}><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="form-grid">
         <div class="form-field"><label for="code">Programme code</label><input id="code" name="code" value="{{ programme.code|default('') }}" maxlength="30" required>{% if errors.code %}<small class="field-error">{{ errors.code }}</small>{% endif %}</div>
