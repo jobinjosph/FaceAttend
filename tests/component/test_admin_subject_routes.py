@@ -50,7 +50,9 @@ def test_admin_can_list_subjects_in_selected_academic_group(client, monkeypatch)
     response = client.get("/admin/subjects")
     assert response.status_code == 200
     assert b'<a class="apple-shop-button"' in response.data
-    assert b'class="apple-shop-button apple-shop-button-grey subject-filter-submit"' in response.data
+    assert b'data-subject-status-filter' in response.data
+    assert b'subject-filter-submit' not in response.data
+    assert b'>Filter</button>' not in response.data
     assert b"Cloud Computing" in response.data
     assert b"Manage Subjects" in response.data
     assert b"Manage subjects across programmes, semesters, and sections." in response.data
