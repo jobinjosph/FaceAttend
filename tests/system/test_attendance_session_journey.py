@@ -1,4 +1,24 @@
 import pytest
+from datetime import date
+
+
+@pytest.mark.system
+def test_admin_date_filter_preserves_group_without_generating(client, monkeypatch):
+    calls = []
+    monkeypatch.setattr("services.session_service.list_sessions",
+                        lambda day, semester_id: calls.append((day, semester_id)) or [])
+    def unexpected_generation(*args):
+        pytest.fail("Viewing a date must not generate sessions")
+    monkeypatch.setattr("services.session_service.generate_sessions", unexpected_generation)
+    with client.session_transaction() as session:
+        session.update(user_id=1, full_name="Admin", role="ADMIN")
+    response = client.get("/admin/sessions?date=2026-09-29&semester_id=3")
+    assert response.status_code == 200
+    assert calls == [(date(2026, 9, 29), 3)]
+    assert b"data-session-date-filter" in response.data
+    assert b">View</button>" not in response.data
+    assert b'name="semester_id" value="3"' in response.data
+    assert b'name="session_date" value="2026-09-29"' in response.data
 
 
 @pytest.fixture(autouse=True)

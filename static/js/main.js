@@ -6,6 +6,15 @@ if (subjectStatusFilter) {
     });
 }
 
+const sessionDateFilter = document.querySelector("[data-session-date-filter]");
+if (sessionDateFilter) {
+    sessionDateFilter.addEventListener("change", () => {
+        if (sessionDateFilter.value && sessionDateFilter.checkValidity()) {
+            sessionDateFilter.form.requestSubmit();
+        }
+    });
+}
+
 const navLinks = document.querySelector(".nav-links");
 
 if (menuButton && navLinks) {
