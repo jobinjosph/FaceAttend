@@ -34,6 +34,7 @@ def test_admin_can_add_edit_and_deactivate_subject_in_selected_group(client, mon
     }, follow_redirects=True)
     assert added.status_code == 200
     assert b'data-subject-status-filter' in added.data
+    assert b'subject-filter-submit' not in added.data
     assert b"AI433" in added.data
 
     edited = client.post("/admin/subjects/1/edit", data={

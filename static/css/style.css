@@ -1632,6 +1632,16 @@ a {
     visibility: hidden;
 }
 
+.subject-management-page .list-filter-form:not(.academic-context-filters) {
+    grid-template-columns: minmax(0, 1fr) minmax(150px, 220px);
+}
+
+@media (max-width: 700px) {
+    .subject-management-page .list-filter-form:not(.academic-context-filters) {
+        grid-template-columns: 1fr;
+    }
+}
+
 .subject-filter-submit {
     transform: none;
     align-self: center;
