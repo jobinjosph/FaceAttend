@@ -1393,8 +1393,12 @@ a {
 }
 
 .student-login-field input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
     height: 49px;
     min-height: 49px;
+    max-height: 49px;
 }
 
 [data-placement-form] > .form-field {
