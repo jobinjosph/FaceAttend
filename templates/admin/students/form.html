@@ -55,9 +55,6 @@
                         autocomplete="new-password"
                         {% if not is_edit or not student.get('user_id') %}required{% endif %}
                     >
-                    {% if is_edit and student.get('user_id') %}
-                        <small>Leave blank to keep the current password.</small>
-                    {% endif %}
                     {% if errors.get('password') %}<small class="field-error">{{ errors.password }}</small>{% endif %}
                 </div>
 
