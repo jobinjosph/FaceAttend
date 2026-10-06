@@ -1723,7 +1723,7 @@ a {
 .session-date-field { display: grid; gap: 5px; }
 .session-date-field label { width: 100%; text-align: center; }
 .session-toolbar input, .session-date-filter input { min-height: 46px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; }
-.session-date-filter { margin-bottom: 20px; }
+.session-date-filter { align-items: center; margin-bottom: 20px; }
 .session-card-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
 .session-card { display: flex; justify-content: space-between; gap: 18px; padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: white; }
 .session-card h2 { margin: 12px 0 6px; font-size: 1.05rem; }
