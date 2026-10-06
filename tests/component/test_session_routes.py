@@ -88,10 +88,13 @@ def test_admin_generates_sessions(client,monkeypatch):
 @pytest.mark.component
 def test_faculty_sees_own_sessions(client,monkeypatch):
     login(client,"FACULTY",7); captured={}
-    monkeypatch.setattr("services.session_service.list_faculty_sessions",lambda user_id,day:captured.update(user_id=user_id) or [])
+    monkeypatch.setattr("services.session_service.list_faculty_sessions",lambda user_id,day:captured.update(user_id=user_id, day=day.isoformat()) or [])
     response=client.get("/faculty/sessions?date=2026-08-24")
     assert response.status_code==200 and captured["user_id"]==7
-    assert b'class="apple-shop-button apple-shop-button-grey"' in response.data
+    assert captured["day"] == "2026-08-24"
+    assert b'data-session-date-filter required' in response.data
+    assert b'value="2026-08-24"' in response.data
+    assert b'>View</button>' not in response.data
 
 
 @pytest.mark.component
