@@ -2072,6 +2072,7 @@ a {
 }
 
 .correction-submit-actions {
+    justify-content: center;
     margin-top: 24px;
 }
 
