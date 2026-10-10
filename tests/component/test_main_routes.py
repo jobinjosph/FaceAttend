@@ -7,7 +7,7 @@ def test_homepage_opens(client):
 
     assert response.status_code == 200
     assert b"FaceAttend" in response.data
-    assert b"Smarter attendance." in response.data
+    assert b"Smarter attendance," in response.data
 
 
 @pytest.mark.component

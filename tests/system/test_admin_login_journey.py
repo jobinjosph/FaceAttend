@@ -30,7 +30,7 @@ def test_admin_can_login_view_dashboard_and_logout(client, monkeypatch):
 
     logout_response = client.post("/logout", follow_redirects=True)
     assert logout_response.status_code == 200
-    assert b"Smarter attendance." in logout_response.data
+    assert b"Smarter attendance," in logout_response.data
 
     protected_response = client.get("/dashboard/admin")
     assert protected_response.status_code == 302

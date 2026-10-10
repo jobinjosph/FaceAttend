@@ -16,6 +16,17 @@ if (sessionDateFilter) {
 }
 
 const navLinks = document.querySelector(".nav-links");
+const accountMenu = document.querySelector(".account-menu");
+
+if (accountMenu && window.matchMedia("(hover: hover)").matches) {
+    let closeTimer;
+    accountMenu.addEventListener("mouseenter", () => window.clearTimeout(closeTimer));
+    accountMenu.addEventListener("mouseleave", () => {
+        closeTimer = window.setTimeout(() => {
+            accountMenu.open = false;
+        }, 250);
+    });
+}
 
 if (menuButton && navLinks) {
     menuButton.addEventListener("click", () => {

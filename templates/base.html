@@ -7,7 +7,7 @@
     <title>{% block title %}FaceAttend{% endblock %}</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='41') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/campus.css', v='11') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/campus.css', v='12') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
     {% set dashboard_endpoint = {'ADMIN': 'dashboard.admin_dashboard', 'FACULTY': 'dashboard.faculty_dashboard', 'STUDENT': 'dashboard.student_dashboard'}.get(session.get('role')) %}
@@ -103,6 +103,6 @@
         </div>
     </footer>
 
-    <script src="{{ url_for('static', filename='js/main.js', v='6') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js', v='7') }}"></script>
 </body>
 </html>
