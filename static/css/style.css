@@ -95,14 +95,19 @@ a {
     position: relative;
     width: 48px;
     height: 48px;
-    display: grid;
-    place-items: center;
-    border-radius: 14px;
-    background: linear-gradient(145deg, #ffffff, #e7f1ff);
-    color: var(--navy-900);
-    font-size: 0.88rem;
-    font-weight: 800;
-    letter-spacing: -0.04em;
+    display: block;
+    flex: none;
+    overflow: hidden;
+}
+
+.brand-mark img {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    width: 75px;
+    max-width: none;
+    height: auto;
+    transform: translateX(-50%);
 }
 
 .scan-corner,

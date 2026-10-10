@@ -6,7 +6,8 @@
     <meta name="description" content="FaceAttend - smart period-based student attendance using face recognition.">
     <title>{% block title %}FaceAttend{% endblock %}</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='41') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/faceattend-scan-logo.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='46') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/campus.css', v='12') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -27,12 +28,8 @@
         <nav class="navbar">
             <div class="container nav-inner">
                 <a class="brand" href="{{ url_for('main.home') }}">
-                    <span class="brand-mark">
-                        <span class="scan-corner tl"></span>
-                        <span class="scan-corner tr"></span>
-                        <span class="scan-corner bl"></span>
-                        <span class="scan-corner br"></span>
-                        FA
+                    <span class="brand-mark" aria-hidden="true">
+                        <img src="{{ url_for('static', filename='images/faceattend-scan-logo.png') }}" alt="" width="75" height="75">
                     </span>
                     <span class="brand-copy">
                         <strong>FaceAttend</strong>
