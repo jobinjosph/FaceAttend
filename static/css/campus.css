@@ -75,31 +75,7 @@ a:focus-visible,button:focus-visible { outline:3px solid #6199f7; outline-offset
 }
 .campus-portal-page .campus-breadcrumb { color:#cedbef; }
 .campus-portal-page .campus-breadcrumb a { color:#a9ccff; }
-.campus-portal-page .auth-section,
-.campus-portal-page .dashboard-section { background:transparent; }
-.campus-portal-page .dashboard-section { color:#f5f8ff; }
-.campus-portal-page .dashboard-welcome {
-    background:rgba(16,36,60,.94);
-    border:1px solid #3c526d;
-    border-left:4px solid #70a8ff;
-    border-radius:12px;
-    box-shadow:0 14px 38px #00000018;
-}
-.campus-portal-page .dashboard-welcome .section-kicker { color:#a5c9ff; }
-.campus-portal-page .dashboard-welcome p,
-.campus-portal-page .dashboard-module p { color:#c4d3e5; }
-.campus-portal-page .dashboard-module {
-    color:#f5f8ff;
-    background:rgba(16,36,60,.97);
-    border:1px solid #3c526d;
-    box-shadow:0 8px 24px #00000012;
-}
-.campus-portal-page .dashboard-module:not(.muted):hover {
-    background:#183653;
-    border-color:#88b7ff;
-}
-.campus-portal-page .dashboard-module-icon { color:#b9d6ff; background:#234367; }
-.campus-portal-page .dashboard-module .arrow { color:#9bc3ff; }
+.campus-portal-page .auth-section { background:transparent; }
 @media(max-width:900px) { .campus-feature-grid { gap:30px; } .campus-portal { padding:22px; } .campus-steps { grid-template-columns:repeat(3,1fr); gap:25px; } .campus-steps li::before { display:none; } }
 @media(max-width:700px) { .campus-section { padding:50px 0; } .campus-hero { min-height:620px; } .campus-hero-content { padding-top:120px; padding-bottom:35px; } .campus-hero-photo { object-position:55% center; } .campus-portals,.campus-feature-grid { grid-template-columns:1fr; } .campus-portal p { min-height:0; } .campus-community { min-height:340px; } .campus-steps { grid-template-columns:1fr; gap:24px; } .campus-steps p { margin:6px auto; max-width:280px; } .campus-flow { gap:8px; font-size:.72rem; } .campus-flow span:not([aria-hidden]) { padding:6px; } .auth-card { padding:30px 24px; } .dashboard-welcome { padding:22px; } }
 @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .campus-portal { transition:none; } }
