@@ -6,6 +6,5 @@
 {% block title %}Faculty Dashboard | FaceAttend{% endblock %}
 
 {% block dashboard_content %}
-<h2 class="dashboard-section-title">Faculty dashboard</h2>
 <div class="dashboard-grid"><a class="dashboard-module" href="{{ url_for('faculty_sessions.session_list') }}"><span class="dashboard-module-icon">SE</span><div><strong>My Sessions</strong><p>Start, end, review and confirm your scheduled classes.</p></div><span class="arrow">→</span></a><a class="dashboard-module" href="{{ url_for('attendance_reports.attendance_report') }}"><span class="dashboard-module-icon">RP</span><div><strong>My Attendance Reports</strong><p>Review students in your classes and export subject attendance.</p></div><span class="arrow">→</span></a><a class="dashboard-module" href="{{ url_for('correction_requests.review_list') }}"><span class="dashboard-module-icon">CR</span><div><strong>Correction Requests</strong><p>Review correction requests for classes assigned to you.</p></div><span class="arrow">→</span></a></div>
 {% endblock %}

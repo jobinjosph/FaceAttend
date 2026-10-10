@@ -4,11 +4,7 @@
 <section class="dashboard-section">
     <div class="container">
         <div class="dashboard-welcome">
-            <div>
-                <span class="section-kicker">{{ dashboard_role }} portal</span>
-                <h1>Welcome, {{ session.full_name }}</h1>
-                <p>{{ dashboard_message }}</p>
-            </div>
+            <h1>Welcome, {{ session.full_name }}</h1>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}

@@ -63,4 +63,4 @@ def test_admin_creates_faculty_then_faculty_can_login(client, monkeypatch):
     )
     assert logged_in.status_code == 200
     assert b"Welcome, New Faculty" in logged_in.data
-    assert b"Faculty dashboard" in logged_in.data
+    assert b"My Sessions" in logged_in.data

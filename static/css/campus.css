@@ -50,8 +50,9 @@ main { background:var(--surface-soft); }
 .campus-center { text-align:center; }
 /* Existing forms, tables and field dimensions are retained. */
 .dashboard-section { padding-top:45px; }
-.dashboard-welcome { padding:30px; border-left:4px solid #2463eb; background:white; border-radius:0 12px 12px 0; }
-.dashboard-welcome h1,.page-heading-row h1 { font-family:Georgia,serif; font-weight:400; letter-spacing:-.025em; }
+.dashboard-welcome { padding:0; border:0; background:transparent; box-shadow:none; }
+.dashboard-welcome h1,.page-heading-row h1 { font-family:Georgia,serif; letter-spacing:-.025em; }
+.dashboard-welcome h1 { margin:0; font-weight:700; }
 .dashboard-module { border-radius:12px; box-shadow:0 5px 20px #05274d05; }
 .dashboard-module-icon { background:#edf3ff; color:#2463eb; border-radius:10px; }
 .table-card,.student-form-card { border-radius:14px; box-shadow:0 10px 30px #05274d08; }
@@ -77,5 +78,5 @@ a:focus-visible,button:focus-visible { outline:3px solid #6199f7; outline-offset
 .campus-portal-page .campus-breadcrumb a { color:#a9ccff; }
 .campus-portal-page .auth-section { background:transparent; }
 @media(max-width:900px) { .campus-feature-grid { gap:30px; } .campus-portal { padding:22px; } .campus-steps { grid-template-columns:repeat(3,1fr); gap:25px; } .campus-steps li::before { display:none; } }
-@media(max-width:700px) { .campus-section { padding:50px 0; } .campus-hero { min-height:620px; } .campus-hero-content { padding-top:120px; padding-bottom:35px; } .campus-hero-photo { object-position:55% center; } .campus-portals,.campus-feature-grid { grid-template-columns:1fr; } .campus-portal p { min-height:0; } .campus-community { min-height:340px; } .campus-steps { grid-template-columns:1fr; gap:24px; } .campus-steps p { margin:6px auto; max-width:280px; } .campus-flow { gap:8px; font-size:.72rem; } .campus-flow span:not([aria-hidden]) { padding:6px; } .auth-card { padding:30px 24px; } .dashboard-welcome { padding:22px; } }
+@media(max-width:700px) { .campus-section { padding:50px 0; } .campus-hero { min-height:620px; } .campus-hero-content { padding-top:120px; padding-bottom:35px; } .campus-hero-photo { object-position:55% center; } .campus-portals,.campus-feature-grid { grid-template-columns:1fr; } .campus-portal p { min-height:0; } .campus-community { min-height:340px; } .campus-steps { grid-template-columns:1fr; gap:24px; } .campus-steps p { margin:6px auto; max-width:280px; } .campus-flow { gap:8px; font-size:.72rem; } .campus-flow span:not([aria-hidden]) { padding:6px; } .auth-card { padding:30px 24px; } }
 @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .campus-portal { transition:none; } }
