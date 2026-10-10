@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}FaceAttend | Smart Student Attendance{% endblock %}
+{% block content %}
+<section class="campus-hero">
+    <img class="campus-hero-photo" src="{{ url_for('static', filename='images/campus-students.jpg') }}" alt="Students walking together on campus" fetchpriority="high" width="6048" height="4032">
+    <div class="container campus-hero-content">
+        <span class="campus-eyebrow">FACE RECOGNITION · CLASSROOM ATTENDANCE</span>
+        <h1>Every face. <em>Every class. Accounted for.</em></h1>
+        <p>Smarter attendance. Face recognition tracks classroom entry and exit; faculty review each record.</p>
+        <div class="campus-hero-actions"><a class="button primary" href="{{ attendance_portal_url }}">Open attendance portal <span aria-hidden="true">→</span></a><a class="button campus-white" href="#workflow">How attendance works</a></div>
+        <div class="campus-flow" aria-label="Attendance workflow"><span>▣ &nbsp; Verify face</span><span aria-hidden="true">→</span><span>◷ &nbsp; Record presence</span><span aria-hidden="true">→</span><span>✓ &nbsp; Faculty review</span></div>
+    </div>
+</section>
+<section class="campus-section" id="portal">
+    <div class="container">
+        <header class="campus-heading"><span class="section-kicker">YOUR CAMPUS, CONNECTED</span><h2>One portal. A place for everyone.</h2><p>Sign in with your FaceAttend account. Your account takes you to the right dashboard.</p></header>
+        <div class="campus-portals">
+        {% for name, letter, description in [('Student', 'S', 'See your attendance, explore class history and request corrections.'), ('Faculty', 'F', 'Open scheduled sessions, verify students and confirm attendance.'), ('Admin', 'A', 'Organise students, faculty, academic groups and timetables.')] %}
+            <a class="campus-portal" href="{{ attendance_portal_url }}"><span class="campus-role-icon" aria-hidden="true">{{ letter }}</span><h3>{{ name }} Portal</h3><p>{{ description }}</p><span class="campus-portal-link">Enter portal <span aria-hidden="true">→</span></span></a>
+        {% endfor %}
+        </div>
+    </div>
+</section>
+<section class="campus-section campus-features" id="features"><div class="container campus-feature-grid">
+    <div class="campus-community"><img src="{{ url_for('static', filename='images/campus-community.png') }}" alt="Students collaborating with a laptop on campus" width="1440" height="685" loading="lazy"><div>Built around campus life.<br><strong>Designed for every class.</strong></div></div>
+    <div><span class="section-kicker">SMART ATTENDANCE, CLEAR RECORDS</span><h2>From recognition<br>to a reliable record.</h2><div class="campus-feature-list">
+    {% for title, text in [('Face Recognition', 'Recognise registered students during an attendance session.'), ('Period Tracking', 'Keep a separate record for every scheduled class.'), ('Entry & Exit', 'Capture arrival and departure to track classroom presence.'), ('Attendance Analytics', 'Review attendance by subject, month or date and export reports.')] %}
+    <article><span aria-hidden="true">0{{ loop.index }}</span><div><h3>{{ title }}</h3><p>{{ text }}</p></div></article>
+    {% endfor %}</div></div>
+</div></section>
+<section class="campus-section" id="workflow"><div class="container">
+    <header class="campus-heading"><span class="section-kicker">A SIMPLE CLASSROOM ROUTINE</span><h2>How attendance works</h2><p>Face recognition supports the process. Faculty confirm the final record.</p></header>
+    <ol class="campus-steps">
+    {% for title, text in [('Prepare', 'Admin sets up profiles, face registration and timetables.'), ('Start', 'Faculty opens the scheduled class session.'), ('Recognise', 'Students verify their face for entry and exit.'), ('Review', 'Faculty reviews presence and confirms attendance.'), ('Track', 'Students and staff view their attendance reports.')] %}
+        <li><span class="campus-step-number">{{ loop.index }}</span><h3>{{ title }}</h3><p>{{ text }}</p></li>
+    {% endfor %}</ol>
+    <div class="campus-center"><a class="button primary" href="{{ attendance_portal_url }}">Go to FaceAttend <span aria-hidden="true">→</span></a></div>
+</div></section>
+{% endblock %}

@@ -7,7 +7,7 @@ main_bp = Blueprint("main", __name__)
 
 @main_bp.get("/")
 def home():
-    return render_template("home.html")
+    return render_template("campus_home.html")
 
 
 @main_bp.get("/health")

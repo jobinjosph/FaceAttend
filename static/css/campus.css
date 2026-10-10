@@ -1,0 +1,106 @@
+/* Shared campus identity: public site, authentication and all role workspaces. */
+:root { --navy-950:#041737; --navy-900:#062b59; --navy-800:#123f70; --blue-500:#2463eb; --surface-soft:#f5f7fb; --line:#e1e7f0; }
+.utility-bar { background:#031536; }
+.navbar { background:#062b59; }
+.brand-copy strong { font-family:Georgia,serif; font-size:1.65rem; letter-spacing:.01em; }
+.nav-cta,.button { border-radius:8px; }
+.nav-links a.active { color:#aaccff; }
+.site-footer { background:#041737; }
+.campus-breadcrumb { display:flex; flex-wrap:wrap; gap:10px; padding-top:22px; padding-bottom:22px; font-size:.8rem; color:#56677d; }
+.campus-breadcrumb a { color:#225bc1; }
+main { background:var(--surface-soft); }
+.campus-hero { position:relative; min-height:650px; display:flex; align-items:flex-end; isolation:isolate; background:#062b59; color:white; }
+.campus-hero-photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 38%; z-index:-2; }
+.campus-hero::after { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(0deg,rgba(2,18,40,.96),rgba(2,18,40,.46) 55%,rgba(2,18,40,.1)); }
+.campus-hero-content { text-align:center; padding-top:170px; padding-bottom:50px; }
+.campus-eyebrow { font-size:.75rem; font-weight:700; letter-spacing:.17em; }
+.campus-hero h1 { font-family:Georgia,serif; font-size:clamp(2.5rem,3.4vw,3.7rem); line-height:1.13; font-weight:400; letter-spacing:-.035em; margin:20px 0; }
+.campus-hero h1 em { font-weight:400; }
+.campus-hero p { max-width:100%; margin:0 auto 26px; color:#e5edf7; font-size:1.05rem; }
+@media(min-width:1100px) { .campus-hero h1,.campus-hero p { white-space:nowrap; } }
+.campus-hero-actions,.campus-flow { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; }
+.campus-white { background:white; color:#132b49; }
+.campus-flow { margin-top:30px; gap:18px; align-items:center; font-size:.85rem; color:#edf5ff; }
+.campus-flow span:not([aria-hidden]) { padding:8px 14px; border:1px solid #ffffff40; border-radius:6px; background:#ffffff12; }
+.campus-section { padding:85px 0; background:white; scroll-margin-top:30px; }
+.campus-heading { text-align:center; max-width:760px; margin:0 auto 42px; }
+.campus-section h2 { font:400 clamp(2rem,3.2vw,3rem)/1.2 Georgia,serif; letter-spacing:-.035em; margin:14px 0 18px; }
+.campus-heading p,.campus-section article p,.campus-portal p,.campus-steps p { color:#58687e; }
+.campus-portals { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; }
+.campus-portal { padding:30px; border:1px solid var(--line); border-radius:12px; transition:transform .2s,box-shadow .2s; }
+.campus-portal:hover { transform:translateY(-3px); box-shadow:0 12px 30px #05274d12; }
+.campus-role-icon { display:grid; place-items:center; width:44px; height:44px; background:#edf3ff; border-radius:10px; color:#2463eb; font-weight:700; }
+.campus-portal h3 { margin:20px 0 8px; font-size:1.2rem; }
+.campus-portal p { min-height:72px; margin:0 0 22px; }
+.campus-portal-link { color:#225bc1; font-weight:600; display:flex; justify-content:space-between; }
+.campus-features { background:#f5f7fb; }
+.campus-feature-grid { display:grid; grid-template-columns:1fr 1fr; gap:65px; align-items:center; }
+.campus-community { position:relative; overflow:hidden; border-radius:14px; min-height:510px; }
+.campus-community img { position:absolute; width:100%; height:100%; object-fit:cover; object-position:48% center; }
+.campus-community div { position:absolute; bottom:0; width:100%; padding:70px 30px 30px; background:linear-gradient(transparent,#041737eb); color:white; font-size:1.35rem; }
+.campus-feature-list article { display:flex; gap:18px; padding:14px 0; border-bottom:1px solid var(--line); }
+.campus-feature-list article>span { color:#2463eb; font-size:.8rem; padding-top:4px; }
+.campus-feature-list h3 { margin:0 0 4px; font-size:1rem; }
+.campus-feature-list p { margin:0; font-size:.92rem; }
+.campus-steps { list-style:none; display:grid; grid-template-columns:repeat(5,1fr); padding:0; margin:55px 0 40px; text-align:center; }
+.campus-steps li { position:relative; padding:0 12px; }
+.campus-steps li:not(:last-child)::before { content:""; position:absolute; top:29px; left:50%; width:100%; height:2px; background:#c1d7ff; }
+.campus-step-number { position:relative; display:grid; place-items:center; margin:0 auto 18px; width:60px; height:60px; background:#2463eb; color:white; border-radius:50%; box-shadow:0 8px 18px #2463eb25; }
+.campus-steps h3 { font-size:1rem; margin:0; }
+.campus-steps p { font-size:.88rem; }
+.campus-center { text-align:center; }
+/* Existing forms, tables and field dimensions are retained. */
+.dashboard-section { padding-top:45px; }
+.dashboard-welcome { padding:30px; border-left:4px solid #2463eb; background:white; border-radius:0 12px 12px 0; }
+.dashboard-welcome h1,.page-heading-row h1 { font-family:Georgia,serif; font-weight:400; letter-spacing:-.025em; }
+.dashboard-module { border-radius:12px; box-shadow:0 5px 20px #05274d05; }
+.dashboard-module-icon { background:#edf3ff; color:#2463eb; border-radius:10px; }
+.table-card,.student-form-card { border-radius:14px; box-shadow:0 10px 30px #05274d08; }
+.data-table th { background:#edf3fb; }
+.auth-section { background:linear-gradient(#041737bb,#041737e8),url('../images/campus-students.jpg') center/cover; padding:65px 20px; }
+.auth-card { width:min(510px,100%); padding:45px; background:#10243c; color:white; border:1px solid #ffffff20; border-radius:22px; }
+.auth-heading { text-align:center; }
+.auth-heading h1 { font-size:2rem; font-weight:500; letter-spacing:-.025em; }
+.auth-heading p,.auth-card .auth-help { color:#c4d3e5; }
+.auth-card .section-kicker { color:#93bbff; }
+.auth-form input { color:white; background:#ffffff08; border-color:#70839b; border-radius:6px; }
+.auth-card .auth-submit { width:100%; justify-content:center; }
+.auth-card .active-login-warning { color:#112033; }
+a:focus-visible,button:focus-visible { outline:3px solid #6199f7; outline-offset:4px; }
+.campus-portal-page main {
+    background-color:#071d37;
+    background-image:linear-gradient(180deg,rgba(4,23,55,.78),rgba(7,29,55,.96) 680px,#071d37 1100px),url('../images/campus-students.jpg');
+    background-position:top center;
+    background-size:100% 100%,auto 1100px;
+    background-repeat:no-repeat;
+}
+.campus-portal-page .campus-breadcrumb { color:#cedbef; }
+.campus-portal-page .campus-breadcrumb a { color:#a9ccff; }
+.campus-portal-page .auth-section,
+.campus-portal-page .dashboard-section { background:transparent; }
+.campus-portal-page .dashboard-section { color:#f5f8ff; }
+.campus-portal-page .dashboard-welcome {
+    background:rgba(16,36,60,.94);
+    border:1px solid #3c526d;
+    border-left:4px solid #70a8ff;
+    border-radius:12px;
+    box-shadow:0 14px 38px #00000018;
+}
+.campus-portal-page .dashboard-welcome .section-kicker { color:#a5c9ff; }
+.campus-portal-page .dashboard-welcome p,
+.campus-portal-page .dashboard-module p { color:#c4d3e5; }
+.campus-portal-page .dashboard-module {
+    color:#f5f8ff;
+    background:rgba(16,36,60,.97);
+    border:1px solid #3c526d;
+    box-shadow:0 8px 24px #00000012;
+}
+.campus-portal-page .dashboard-module:not(.muted):hover {
+    background:#183653;
+    border-color:#88b7ff;
+}
+.campus-portal-page .dashboard-module-icon { color:#b9d6ff; background:#234367; }
+.campus-portal-page .dashboard-module .arrow { color:#9bc3ff; }
+@media(max-width:900px) { .campus-feature-grid { gap:30px; } .campus-portal { padding:22px; } .campus-steps { grid-template-columns:repeat(3,1fr); gap:25px; } .campus-steps li::before { display:none; } }
+@media(max-width:700px) { .campus-section { padding:50px 0; } .campus-hero { min-height:620px; } .campus-hero-content { padding-top:120px; padding-bottom:35px; } .campus-hero-photo { object-position:55% center; } .campus-portals,.campus-feature-grid { grid-template-columns:1fr; } .campus-portal p { min-height:0; } .campus-community { min-height:340px; } .campus-steps { grid-template-columns:1fr; gap:24px; } .campus-steps p { margin:6px auto; max-width:280px; } .campus-flow { gap:8px; font-size:.72rem; } .campus-flow span:not([aria-hidden]) { padding:6px; } .auth-card { padding:30px 24px; } .dashboard-welcome { padding:22px; } }
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .campus-portal { transition:none; } }
