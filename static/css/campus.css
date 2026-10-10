@@ -3,7 +3,11 @@
 .utility-bar { background:#031536; }
 .navbar { background:#062b59; }
 .brand-copy strong { font-family:Georgia,serif; font-size:1.65rem; letter-spacing:.01em; }
-.nav-cta,.button { border-radius:8px; }
+.button { border-radius:8px; }
+.nav-cta,.auth-submit { border-radius:999px; }
+.nav-links > .nav-cta,.account-menu-trigger { padding:11px 26px; background:#fff; color:#0b2a53 !important; box-shadow:0 2px 8px #001b3812; }
+.nav-links > .nav-cta:hover,.account-menu-trigger:hover { background:#eaf2ff; color:#0b2a53 !important; }
+.account-menu-trigger .account-avatar { background:#eaf2ff; color:#164f9f; }
 .nav-links a.active { color:#aaccff; }
 .site-footer { background:#041737; }
 .campus-breadcrumb { display:flex; flex-wrap:wrap; gap:10px; padding-top:22px; padding-bottom:22px; font-size:.8rem; color:#56677d; }
@@ -64,7 +68,8 @@ main { background:var(--surface-soft); }
 .auth-heading p,.auth-card .auth-help { color:#c4d3e5; }
 .auth-card .section-kicker { color:#93bbff; }
 .auth-form input { color:white; background:#ffffff08; border-color:#70839b; border-radius:6px; }
-.auth-card .auth-submit { width:100%; justify-content:center; }
+.auth-card .auth-submit { width:100%; justify-content:center; background:#fff; color:#0b2a53; box-shadow:none; }
+.auth-card .auth-submit:hover { background:#eaf2ff; }
 .auth-card .active-login-warning { color:#112033; }
 a:focus-visible,button:focus-visible { outline:3px solid #6199f7; outline-offset:4px; }
 .campus-portal-page main {
