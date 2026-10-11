@@ -42,11 +42,6 @@ if (menuButton && navLinks) {
     });
 }
 
-const year = document.getElementById("current-year");
-if (year) {
-    year.textContent = new Date().getFullYear();
-}
-
 const courseSelect = document.getElementById("course_id");
 const semesterSelect = document.getElementById("semester_id");
 const academicYearSelect = document.getElementById("student_academic_year");
