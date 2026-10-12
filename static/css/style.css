@@ -1148,6 +1148,12 @@ a {
     margin-top: 42px;
 }
 
+.dashboard-module-centered {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc((100% - 22px) / 2);
+}
+
 .dashboard-module {
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -1979,6 +1985,10 @@ a {
     .dashboard-grid,
     .form-grid {
         grid-template-columns: 1fr;
+    }
+
+    .dashboard-module-centered {
+        width: 100%;
     }
 
     .form-field.full-width {
